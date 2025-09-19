@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 🚫 El navegador ya no scrollea */
+}
+/* Scrollbar general */
+::-webkit-scrollbar {
+  width: 10px;         /* ancho de la barra */
+  height: 10px;        /* alto para scroll horizontal */
+}
+
+/* Fondo de la barra */
+::-webkit-scrollbar-track {
+  background: #1f2937;  /* gris oscuro (tailwind: gray-800) */
+  border-radius: 10px;
+}
+
+/* Pulgar (lo que se arrastra) */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #06b6d4, #0891b2); /* gradiente cyan */
+  border-radius: 10px;
+  border: 2px solid #1f2937; /* separación elegante */
+  transition: background 0.3s ease-in-out;
+}
+
+/* Hover en el pulgar */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #22d3ee, #0e7490); /* más brillante */
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #06b6d4 #1f2937;
+}
