@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import PanelPrincipal from "../components/simulador/PanelPrincipal";
+import PanelPrincipal from "../components/home/PanelPrincipal";
 
 const HomePage = () => {
   const navigate = useNavigate();

@@ -1,0 +1,1426 @@
+/* TeoriaPage.css */
+
+/* === BASE STYLES === */
+.teoria-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  display: flex;
+  overflow: hidden;
+}
+
+/* === MAIN CONTAINER === */
+.teoria-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  transition: all 0.5s ease;
+  overflow-y: auto;
+}
+
+.teoria-main-with-sidebar {
+  margin-right: 28rem;
+}
+
+.teoria-container {
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* === HEADER STYLES === */
+.teoria-header {
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.teoria-header .teoria-container {
+  padding: 2rem;
+}
+
+.teoria-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.teoria-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.teoria-title-icon {
+  position: relative;
+  margin-right: 1rem;
+}
+
+.teoria-title-text {
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.teoria-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.teoria-action-button {
+  padding: 0.75rem;
+  background: rgba(55, 65, 81, 0.7);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  border-radius: 0.75rem;
+  color: white;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+
+.teoria-action-button:hover {
+  background: rgba(75, 85, 99, 0.7);
+  border-color: rgba(6, 182, 212, 0.3);
+  transform: translateY(-1px);
+}
+
+/* === STATISTICS === */
+.teoria-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.teoria-stat {
+  position: relative;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.teoria-stat-blue {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-color: rgba(6, 182, 212, 0.2);
+}
+
+.teoria-stat-green {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.teoria-stat-purple {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.teoria-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(6, 182, 212, 0.1);
+}
+
+.teoria-stat-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, transparent 100%);
+  border-radius: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.teoria-stat:hover .teoria-stat-glow {
+  opacity: 1;
+}
+
+.teoria-stat-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.teoria-stat-icon {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  margin-right: 1rem;
+}
+
+.teoria-stat-blue .teoria-stat-icon {
+  background: rgba(6, 182, 212, 0.2);
+}
+
+.teoria-stat-green .teoria-stat-icon {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.teoria-stat-purple .teoria-stat-icon {
+  background: rgba(168, 85, 247, 0.2);
+}
+
+.teoria-stat-label {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.teoria-stat-value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: white;
+}
+
+.teoria-progress-bar {
+  margin-top: 0.75rem;
+  width: 100%;
+  background: rgba(55, 65, 81, 0.5);
+  border-radius: 9999px;
+  height: 0.5rem;
+  overflow: hidden;
+}
+
+.teoria-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #ec4899);
+  transition: width 1s ease-out;
+  border-radius: 9999px;
+}
+
+/* === CATEGORIES === */
+.teoria-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.teoria-category-button {
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: rgba(55, 65, 81, 0.7);
+  color: #d1d5db;
+}
+
+.teoria-category-button:hover {
+  background: rgba(75, 85, 99, 0.7);
+  color: white;
+  border-color: rgba(75, 85, 99, 0.5);
+  transform: translateY(-1px);
+}
+
+.teoria-category-active {
+  background: linear-gradient(90deg, #06b6d4, #3b82f6) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+/* === SEARCH === */
+.teoria-search-container {
+  position: relative;
+  width: 100%;
+  max-width: 48rem;
+}
+
+.teoria-search-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.teoria-search-input {
+  width: 100%;
+  padding: 1rem 1.5rem 1rem 3.5rem;
+  background: rgba(55, 65, 81, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  border-radius: 1rem;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.teoria-search-input:focus {
+  outline: none;
+  ring: 2px solid rgba(6, 182, 212, 0.5);
+  border-color: rgba(6, 182, 212, 0.5);
+  background: rgba(55, 65, 81, 0.8);
+}
+
+.teoria-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.teoria-search-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border-radius: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.teoria-search-container:hover .teoria-search-glow {
+  opacity: 1;
+}
+
+/* === CONTENT AREA === */
+.teoria-content {
+  flex: 1;
+  padding: 2.5rem 0;
+}
+
+/* === RESULTS === */
+.teoria-results {
+  margin-bottom: 2rem;
+}
+
+.teoria-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.teoria-results-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.teoria-results-count {
+  color: #9ca3af;
+  font-size: 1.125rem;
+}
+
+.teoria-results-badge {
+  padding: 0.25rem 0.75rem;
+  background: rgba(6, 182, 212, 0.2);
+  color: #67e8f9;
+  font-size: 0.875rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+/* === GRID LAYOUT === */
+.teoria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.teoria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* === CARD STYLES === */
+.teoria-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  transition: all 0.5s ease;
+  position: relative;
+}
+
+.teoria-card:hover {
+  border-color: rgba(6, 182, 212, 0.3);
+  transform: scale(1.03) translateY(-4px);
+  box-shadow: 0 20px 40px rgba(6, 182, 212, 0.1);
+}
+
+.teoria-card-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(6, 182, 212, 0.05) 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.teoria-card:hover .teoria-card-glow {
+  opacity: 1;
+}
+
+.teoria-card-header {
+  height: 0.25rem;
+}
+
+.teoria-card-content {
+  position: relative;
+  padding: 1.5rem;
+}
+
+.teoria-card-badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.teoria-category-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  border: 1px solid;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.teoria-read-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.teoria-completed-indicator {
+  position: relative;
+}
+
+.teoria-pulse-ring {
+  position: absolute;
+  inset: 0;
+  background: rgba(34, 197, 94, 0.2);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.teoria-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.75rem;
+  transition: color 0.3s ease;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.teoria-card:hover .teoria-card-title {
+  color: #67e8f9;
+}
+
+.teoria-card-description {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.teoria-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.teoria-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.teoria-meta-item {
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.teoria-card-arrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.teoria-completed-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+/* === LIST ITEM STYLES === */
+.teoria-list-item {
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 0%, rgba(30, 41, 59, 0.3) 100%);
+  backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  cursor: pointer;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  transition: all 0.3s ease;
+}
+
+.teoria-list-item:hover {
+  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(55, 65, 81, 0.5);
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.05);
+}
+
+.teoria-list-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.teoria-list-indicator {
+  flex-shrink: 0;
+}
+
+.teoria-list-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.teoria-list-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.teoria-list-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teoria-list-item:hover .teoria-list-title {
+  color: #67e8f9;
+}
+
+.teoria-list-description {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.teoria-list-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.teoria-list-arrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* === SIDEBAR STYLES === */
+.teoria-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 28rem;
+  height: 100vh;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(75, 85, 99, 0.3);
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  box-shadow: -10px 0 25px rgba(0, 0, 0, 0.3);
+}
+
+.teoria-sidebar-header {
+  padding: 2rem;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+  flex-shrink: 0;
+}
+
+.teoria-sidebar-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1.5rem;
+}
+
+.teoria-sidebar-info {
+  flex: 1;
+  padding-right: 1rem;
+}
+
+.teoria-sidebar-badges {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+}
+
+.teoria-sidebar-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.teoria-sidebar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.teoria-sidebar-action {
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  border: none;
+  background: transparent;
+}
+
+.teoria-sidebar-action:hover {
+  background: rgba(55, 65, 81, 0.5);
+}
+
+.teoria-sidebar-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.teoria-button {
+  display: flex;
+  align-items: center;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.teoria-button-green {
+  background: linear-gradient(90deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+}
+
+.teoria-button-green:hover {
+  background: linear-gradient(90deg, #059669, #047857);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.teoria-button-blue {
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  color: white;
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);
+}
+
+.teoria-button-blue:hover {
+  background: linear-gradient(90deg, #0891b2, #2563eb);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+}
+
+.teoria-button-gray {
+  background: rgba(55, 65, 81, 0.7);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+
+.teoria-button-gray:hover {
+  background: rgba(75, 85, 99, 0.7);
+}
+
+.teoria-button-large {
+  padding: 0.875rem 1.5rem;
+  font-weight: 600;
+}
+
+.teoria-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.teoria-sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.teoria-sidebar-content::-webkit-scrollbar-track {
+  background: rgba(55, 65, 81, 0.3);
+  border-radius: 3px;
+}
+
+.teoria-sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 3px;
+}
+
+.teoria-sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+.teoria-sidebar-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.teoria-sidebar-stat {
+  background: rgba(55, 65, 81, 0.3);
+  backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(75, 85, 99, 0.2);
+}
+
+.teoria-sidebar-stat-value {
+  color: white;
+  font-weight: 600;
+}
+
+.teoria-sidebar-section {
+  margin-bottom: 2rem;
+}
+
+.teoria-sidebar-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.teoria-sidebar-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.teoria-sidebar-expand {
+  font-size: 0.875rem;
+  color: #06b6d4;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.teoria-sidebar-expand:hover {
+  color: #67e8f9;
+}
+
+.teoria-sidebar-text {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(75, 85, 99, 0.2);
+}
+
+.teoria-content-text {
+  color: #d1d5db;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.teoria-content-text-large {
+  max-height: none;
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+
+.teoria-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.teoria-task {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(75, 85, 99, 0.2);
+  transition: all 0.3s ease;
+}
+
+.teoria-task:hover {
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.teoria-task-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.teoria-task-title {
+  font-weight: 600;
+  color: white;
+}
+
+.teoria-task-difficulty {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid;
+}
+
+.teoria-task-description {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.teoria-task-button {
+  font-size: 0.875rem;
+  color: #06b6d4;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.teoria-task-button:hover {
+  color: #67e8f9;
+}
+
+.teoria-resources {
+  background: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(75, 85, 99, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.teoria-resource-link {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #06b6d4;
+  text-decoration: none;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.teoria-resource-link:hover {
+  color: #67e8f9;
+  background: rgba(55, 65, 81, 0.3);
+}
+
+.teoria-sidebar-footer {
+  padding: 2rem;
+  border-top: 1px solid rgba(75, 85, 99, 0.3);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.teoria-footer-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 1.5rem;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.teoria-footer-button-primary {
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  color: white;
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);
+}
+
+.teoria-footer-button-primary:hover {
+  background: linear-gradient(90deg, #0891b2, #2563eb);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+}
+
+.teoria-footer-button-secondary {
+  background: rgba(55, 65, 81, 0.7);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+
+.teoria-footer-button-secondary:hover {
+  background: rgba(75, 85, 99, 0.7);
+}
+
+/* === MODAL STYLES === */
+.teoria-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.teoria-modal {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 1.5rem;
+  width: 100%;
+  max-width: 96rem;
+  height: 90vh;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.teoria-modal-header {
+  padding: 2rem;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+  flex-shrink: 0;
+}
+
+.teoria-modal-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.teoria-modal-info {
+  flex: 1;
+  padding-right: 2rem;
+}
+
+.teoria-modal-badges {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.teoria-modal-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1.3;
+  margin-bottom: 1rem;
+}
+
+.teoria-modal-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: #9ca3af;
+}
+
+.teoria-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.teoria-modal-action {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.teoria-modal-action:hover {
+  background: rgba(55, 65, 81, 0.5);
+}
+
+.teoria-modal-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.teoria-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.teoria-modal-body {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.teoria-modal-text {
+  background: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  padding: 2rem;
+  border: 1px solid rgba(75, 85, 99, 0.2);
+}
+
+.teoria-modal-section {
+  margin-top: 2.5rem;
+}
+
+.teoria-modal-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.teoria-modal-tasks {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.teoria-modal-task {
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(75, 85, 99, 0.2);
+  transition: all 0.3s ease;
+}
+
+.teoria-modal-task:hover {
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.teoria-modal-task-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.teoria-modal-task-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+}
+
+.teoria-modal-task-description {
+  color: #9ca3af;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.teoria-modal-task-button {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(6, 182, 212, 0.2);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.teoria-modal-task-button:hover {
+  background: rgba(6, 182, 212, 0.3);
+  color: #67e8f9;
+}
+
+/* === ERROR STATES === */
+.teoria-error {
+  text-align: center;
+  padding: 5rem 0;
+}
+
+.teoria-error-content {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.teoria-error-message {
+  color: #f87171;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.teoria-error-button {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);
+  cursor: pointer;
+}
+
+.teoria-error-button:hover {
+  background: linear-gradient(90deg, #0891b2, #2563eb);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+}
+
+/* === EMPTY STATES === */
+.teoria-empty {
+  text-align: center;
+  padding: 5rem 0;
+}
+
+.teoria-empty-content {
+  margin-bottom: 2rem;
+}
+
+.teoria-empty-icon {
+  position: relative;
+  width: 6rem;
+  height: 6rem;
+  margin: 0 auto 1.5rem;
+}
+
+.teoria-empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #d1d5db;
+  margin-bottom: 0.75rem;
+}
+
+.teoria-empty-description {
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+.teoria-empty-button {
+  padding: 0.5rem 1.5rem;
+  background: rgba(55, 65, 81, 0.7);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+.teoria-empty-button:hover {
+  background: rgba(75, 85, 99, 0.7);
+}
+
+/* === LOADING STATES === */
+.teoria-loading {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  display: flex;
+}
+
+.teoria-header-skeleton {
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+  flex-shrink: 0;
+}
+
+.teoria-loading-title {
+  height: 2.5rem;
+  background: linear-gradient(90deg, #374151, #4b5563);
+  border-radius: 0.75rem;
+  width: 20rem;
+  margin-bottom: 2rem;
+  animation: pulse 2s infinite;
+}
+
+.teoria-stats-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.teoria-stat-skeleton {
+  background: linear-gradient(135deg, #374151, #4b5563);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  animation: pulse 2s infinite;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.teoria-categories-skeleton {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.teoria-category-skeleton {
+  height: 2.5rem;
+  background: linear-gradient(90deg, #374151, #4b5563);
+  border-radius: 9999px;
+  width: 8rem;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+.teoria-search-skeleton {
+  height: 3.5rem;
+  background: linear-gradient(90deg, #374151, #4b5563);
+  border-radius: 1rem;
+  width: 24rem;
+  animation: pulse 2s infinite;
+}
+
+.teoria-content-skeleton {
+  flex: 1;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.teoria-card-skeleton {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-radius: 1rem;
+  overflow: hidden;
+  animation: pulse 2s infinite;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+}
+
+.teoria-card-skeleton-header {
+  height: 0.25rem;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+}
+
+.teoria-card-skeleton-content {
+  padding: 1.5rem;
+}
+
+.teoria-card-skeleton-badge {
+  height: 1.5rem;
+  background: #374151;
+  border-radius: 9999px;
+  width: 6rem;
+  margin-bottom: 1rem;
+}
+
+.teoria-card-skeleton-title {
+  height: 1.75rem;
+  background: #374151;
+  border-radius: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.teoria-card-skeleton-line {
+  height: 1rem;
+  background: #374151;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.teoria-card-skeleton-line-short {
+  height: 1rem;
+  background: #374151;
+  border-radius: 0.25rem;
+  width: 75%;
+  margin-bottom: 1.5rem;
+}
+
+.teoria-card-skeleton-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.teoria-card-skeleton-meta {
+  height: 1rem;
+  background: #374151;
+  border-radius: 0.25rem;
+  width: 7rem;
+}
+
+.teoria-card-skeleton-arrow {
+  height: 1.25rem;
+  background: #374151;
+  border-radius: 0.25rem;
+  width: 1.25rem;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 1024px) {
+  .teoria-main-with-sidebar {
+    margin-right: 0;
+  }
+  
+  .teoria-sidebar {
+    width: 100%;
+    left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .teoria-container {
+    padding: 0 1rem;
+  }
+  
+  .teoria-header .teoria-container {
+    padding: 1.5rem;
+  }
+  
+  .teoria-title {
+    font-size: 1.875rem;
+  }
+  
+  .teoria-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .teoria-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .teoria-categories {
+    justify-content: center;
+  }
+  
+  .teoria-search-container {
+    max-width: 100%;
+  }
+  
+  .teoria-modal {
+    margin: 0.5rem;
+    height: calc(100vh - 1rem);
+  }
+  
+  .teoria-modal-title {
+    font-size: 1.875rem;
+  }
+  
+  .teoria-sidebar-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .teoria-header-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .teoria-card-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .teoria-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .teoria-sidebar-buttons {
+    flex-direction: column;
+  }
+  
+  .teoria-modal-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .teoria-modal-info {
+    padding-right: 0;
+  }
+  
+  .teoria-modal-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}

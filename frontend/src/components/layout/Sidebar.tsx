@@ -9,7 +9,7 @@ import {
   FileText,
   TrendingUp,
 } from "lucide-react";
-import logo from '../../assets/icons/logo.png'; // import correcto para Vite
+import logo from '../../assets/icons/logo.png';
 
 type NavItem = {
   to: string;
