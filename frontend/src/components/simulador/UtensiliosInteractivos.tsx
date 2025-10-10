@@ -20,7 +20,7 @@ const UtensiliosInteractivos: React.FC<UtensiliosInteractivosProps> = ({
   onClick,
   onMove
 }) => {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hover, setHover] = useState(false);
   const { camera, gl } = useThree();
@@ -30,7 +30,8 @@ const UtensiliosInteractivos: React.FC<UtensiliosInteractivosProps> = ({
   useFrame(() => {
     if (groupRef.current) {
       const targetScale = hover ? 1.08 : 1.0;
-      groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+      const current = groupRef.current.scale;
+      current.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
       
       // Rotación sutil cuando está en hover
       if (hover && !isDragging) {
@@ -43,41 +44,53 @@ const UtensiliosInteractivos: React.FC<UtensiliosInteractivosProps> = ({
   const handlePointerDown = (e: any) => {
     e.stopPropagation();
     setIsDragging(true);
-    gl.domElement.style.cursor = 'grabbing';
+    if (gl && gl.domElement) gl.domElement.style.cursor = 'grabbing';
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: any) => {
+    e.stopPropagation();
     setIsDragging(false);
-    gl.domElement.style.cursor = hover ? 'grab' : 'auto';
+    if (gl && gl.domElement) gl.domElement.style.cursor = hover ? 'grab' : 'auto';
   };
 
   const handlePointerMove = (e: any) => {
-    if (isDragging) {
-      e.stopPropagation();
-      
-      // Calcular nueva posición en el plano 3D
+    if (!isDragging) return;
+    e.stopPropagation();
+
+    // Usar e.ray para obtener la intersección exacta con el plano
+    const ray: THREE.Ray | undefined = e.ray;
+    const intersectPoint = new THREE.Vector3();
+
+    if (ray && typeof ray.intersectPlane === 'function') {
+      ray.intersectPlane(dragPlane, intersectPoint);
+    } else {
+      // fallback usando clientX/clientY
+      const xNdc = (e.clientX / window.innerWidth) * 2 - 1;
+      const yNdc = -(e.clientY / window.innerHeight) * 2 + 1;
+      const mouse = new THREE.Vector2(xNdc, yNdc);
       const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(
-        new THREE.Vector2(
-          (e.clientX / window.innerWidth) * 2 - 1,
-          -(e.clientY / window.innerHeight) * 2 + 1
-        ),
-        camera
-      );
-
-      const intersectPoint = new THREE.Vector3();
+      raycaster.setFromCamera(mouse, camera);
       raycaster.ray.intersectPlane(dragPlane, intersectPoint);
-
-      // Limitar movimiento dentro de la mesa
-      const clampedX = Math.max(-3.5, Math.min(3.5, intersectPoint.x));
-      const clampedZ = Math.max(-1.5, Math.min(1.5, intersectPoint.z));
-      
-      onMove([clampedX, 0.1, clampedZ]);
     }
+
+    if (!intersectPoint) return;
+
+    // Limitar movimiento dentro de la mesa
+    const clampedX = Math.max(-3.5, Math.min(3.5, intersectPoint.x));
+    const clampedZ = Math.max(-1.5, Math.min(1.5, intersectPoint.z));
+    const newPos: [number, number, number] = [clampedX, 0.1, clampedZ];
+    
+    // Render visual inmediato
+    if (groupRef.current) {
+      groupRef.current.position.set(newPos[0], newPos[1], newPos[2]);
+    }
+
+    // Comunicar al padre
+    onMove(newPos);
   };
 
   const renderUtensilio = () => {
-    const nombre = utensilio.nombre.toLowerCase();
+    const nombre = (utensilio.nombre || '').toLowerCase();
     
     if (nombre.includes('vaso') || nombre.includes('precipitado')) {
       return <VasoPrecipitados contenido={contenido} />;
@@ -116,11 +129,11 @@ const UtensiliosInteractivos: React.FC<UtensiliosInteractivosProps> = ({
       onPointerOver={(e) => {
         e.stopPropagation();
         setHover(true);
-        gl.domElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+        if (gl && gl.domElement) gl.domElement.style.cursor = isDragging ? 'grabbing' : 'grab';
       }}
       onPointerOut={() => {
         setHover(false);
-        gl.domElement.style.cursor = 'auto';
+        if (gl && gl.domElement) gl.domElement.style.cursor = 'auto';
       }}
     >
       {renderUtensilio()}
@@ -141,7 +154,7 @@ const UtensiliosInteractivos: React.FC<UtensiliosInteractivosProps> = ({
       )}
 
       {/* Indicador de contenido */}
-      {contenido && contenido.elementos.length > 0 && (
+      {contenido && contenido.elementos && contenido.elementos.length > 0 && (
         <Text
           position={[0, 1.8, 0]}
           fontSize={0.18}
@@ -176,7 +189,7 @@ const UtensiliosInteractivos: React.FC<UtensiliosInteractivosProps> = ({
 // VASO DE PRECIPITADOS
 // ============================================
 const VasoPrecipitados: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => {
-  const liquidRef = useRef<THREE.Mesh>(null);
+  const liquidRef = useRef<THREE.Mesh | null>(null);
   
   useFrame((state) => {
     if (liquidRef.current && contenido?.estado === 'mezclando') {
@@ -211,7 +224,7 @@ const VasoPrecipitados: React.FC<{ contenido?: ContenidoUtensilio }> = ({ conten
       </Cylinder>
 
       {/* Líquido contenido */}
-      {contenido && contenido.nivel > 0 && (
+      {contenido && typeof contenido.nivel === 'number' && contenido.nivel > 0 && (
         <Cylinder 
           ref={liquidRef}
           args={[0.48, 0.58, contenido.nivel * 1.4, 32]} 
@@ -272,7 +285,6 @@ const VasoPrecipitados: React.FC<{ contenido?: ContenidoUtensilio }> = ({ conten
 const MatrazErlenmeyer: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => {
   return (
     <group>
-      {/* Cuerpo cónico */}
       <Cone args={[0.8, 1.5, 32]} position={[0, 0.75, 0]} castShadow>
         <meshPhysicalMaterial
           transparent
@@ -284,7 +296,6 @@ const MatrazErlenmeyer: React.FC<{ contenido?: ContenidoUtensilio }> = ({ conten
         />
       </Cone>
 
-      {/* Cuello del matraz */}
       <Cylinder args={[0.2, 0.2, 0.8, 32]} position={[0, 1.9, 0]} castShadow>
         <meshPhysicalMaterial
           transparent
@@ -295,7 +306,6 @@ const MatrazErlenmeyer: React.FC<{ contenido?: ContenidoUtensilio }> = ({ conten
         />
       </Cylinder>
 
-      {/* Borde del cuello */}
       <Cylinder args={[0.22, 0.22, 0.05, 32]} position={[0, 2.32, 0]}>
         <meshStandardMaterial
           color="#aaccff"
@@ -306,8 +316,7 @@ const MatrazErlenmeyer: React.FC<{ contenido?: ContenidoUtensilio }> = ({ conten
         />
       </Cylinder>
 
-      {/* Líquido */}
-      {contenido && contenido.nivel > 0 && (
+      {contenido && typeof contenido.nivel === 'number' && contenido.nivel > 0 && (
         <Cone 
           args={[0.78, contenido.nivel * 1.4, 32]} 
           position={[0, (contenido.nivel * 1.4) / 2 + 0.05, 0]}
@@ -331,7 +340,6 @@ const MatrazErlenmeyer: React.FC<{ contenido?: ContenidoUtensilio }> = ({ conten
 const TuboEnsayo: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => {
   return (
     <group>
-      {/* Cuerpo del tubo */}
       <Cylinder args={[0.2, 0.2, 1.2, 32]} position={[0, 0.6, 0]} castShadow>
         <meshPhysicalMaterial
           transparent
@@ -342,7 +350,6 @@ const TuboEnsayo: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido })
         />
       </Cylinder>
 
-      {/* Fondo redondeado */}
       <Sphere args={[0.2, 16, 16]} position={[0, 0.0, 0]} castShadow>
         <meshPhysicalMaterial
           transparent
@@ -353,7 +360,6 @@ const TuboEnsayo: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido })
         />
       </Sphere>
 
-      {/* Borde superior */}
       <Cylinder args={[0.21, 0.21, 0.04, 32]} position={[0, 1.22, 0]}>
         <meshStandardMaterial
           color="#aaccff"
@@ -364,8 +370,7 @@ const TuboEnsayo: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido })
         />
       </Cylinder>
 
-      {/* Líquido */}
-      {contenido && contenido.nivel > 0 && (
+      {contenido && typeof contenido.nivel === 'number' && contenido.nivel > 0 && (
         <Cylinder 
           args={[0.18, 0.18, contenido.nivel, 32]} 
           position={[0, contenido.nivel / 2 + 0.05, 0]}
@@ -388,7 +393,7 @@ const TuboEnsayo: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido })
 // ============================================
 const MecheroBunsen: React.FC = () => {
   const [encendido, setEncendido] = useState(false);
-  const flameRef = useRef<THREE.Group>(null);
+  const flameRef = useRef<THREE.Group | null>(null);
 
   useFrame((state) => {
     if (flameRef.current && encendido) {
@@ -400,30 +405,24 @@ const MecheroBunsen: React.FC = () => {
 
   return (
     <group onClick={() => setEncendido(!encendido)}>
-      {/* Base */}
       <Cylinder args={[0.35, 0.45, 0.25, 32]} position={[0, 0.125, 0]} castShadow>
         <meshStandardMaterial color="#2C3E50" metalness={0.8} roughness={0.3} />
       </Cylinder>
 
-      {/* Cuerpo del mechero */}
       <Cylinder args={[0.12, 0.12, 1.2, 32]} position={[0, 0.85, 0]} castShadow>
         <meshStandardMaterial color="#34495E" metalness={0.85} roughness={0.25} />
       </Cylinder>
 
-      {/* Regulador de aire */}
       <Cylinder args={[0.15, 0.15, 0.08, 32]} position={[0, 0.4, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
         <meshStandardMaterial color="#7F8C8D" metalness={0.9} roughness={0.2} />
       </Cylinder>
 
-      {/* Boquilla superior */}
       <Cylinder args={[0.08, 0.12, 0.15, 32]} position={[0, 1.52, 0]} castShadow>
         <meshStandardMaterial color="#95A5A6" metalness={0.9} roughness={0.2} />
       </Cylinder>
 
-      {/* Llama (cuando está encendido) */}
       {encendido && (
         <group ref={flameRef} position={[0, 1.7, 0]}>
-          {/* Llama exterior (naranja) */}
           <Cone args={[0.25, 0.8, 16]} position={[0, 0.4, 0]}>
             <meshBasicMaterial
               color="#FF6600"
@@ -432,7 +431,6 @@ const MecheroBunsen: React.FC = () => {
             />
           </Cone>
           
-          {/* Llama interior (azul) */}
           <Cone args={[0.15, 0.5, 16]} position={[0, 0.25, 0]}>
             <meshBasicMaterial
               color="#00BFFF"
@@ -441,16 +439,14 @@ const MecheroBunsen: React.FC = () => {
             />
           </Cone>
 
-          {/* Núcleo brillante */}
           <Sphere args={[0.08, 16, 16]} position={[0, 0.15, 0]}>
-            <meshBasicMaterial
+            <meshStandardMaterial
               color="#FFFF00"
               emissive="#FFFF00"
               emissiveIntensity={2}
             />
           </Sphere>
 
-          {/* Luz de la llama */}
           <pointLight
             color="#FF6600"
             intensity={3}
@@ -460,9 +456,8 @@ const MecheroBunsen: React.FC = () => {
         </group>
       )}
 
-      {/* Indicador de estado */}
       <Sphere args={[0.05, 16, 16]} position={[0.2, 0.3, 0]}>
-        <meshBasicMaterial
+        <meshStandardMaterial
           color={encendido ? "#00FF00" : "#FF0000"}
           emissive={encendido ? "#00FF00" : "#FF0000"}
           emissiveIntensity={1}
@@ -478,7 +473,6 @@ const MecheroBunsen: React.FC = () => {
 const Pipeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => {
   return (
     <group rotation={[0, 0, Math.PI / 6]}>
-      {/* Bulbo de succión */}
       <Sphere args={[0.25, 16, 16]} position={[0, 1.5, 0]} castShadow>
         <meshStandardMaterial
           color="#FF6B6B"
@@ -489,7 +483,6 @@ const Pipeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => 
         />
       </Sphere>
 
-      {/* Tubo de la pipeta */}
       <Cylinder args={[0.05, 0.05, 1.8, 16]} position={[0, 0.5, 0]} castShadow>
         <meshPhysicalMaterial
           transparent
@@ -500,7 +493,6 @@ const Pipeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => 
         />
       </Cylinder>
 
-      {/* Punta de la pipeta */}
       <Cone args={[0.05, 0.15, 16]} position={[0, -0.45, 0]} castShadow>
         <meshPhysicalMaterial
           transparent
@@ -511,7 +503,6 @@ const Pipeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => 
         />
       </Cone>
 
-      {/* Marcas de graduación */}
       {[0.2, 0.5, 0.8, 1.1].map((y, i) => (
         <Box
           key={i}
@@ -522,8 +513,7 @@ const Pipeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => 
         </Box>
       ))}
 
-      {/* Líquido dentro */}
-      {contenido && contenido.nivel > 0 && (
+      {contenido && typeof contenido.nivel === 'number' && contenido.nivel > 0 && (
         <Cylinder 
           args={[0.045, 0.045, contenido.nivel * 0.8, 16]} 
           position={[0, contenido.nivel * 0.4 - 0.2, 0]}
@@ -545,7 +535,6 @@ const Pipeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => 
 const Probeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) => {
   return (
     <group>
-      {/* Base hexagonal */}
       <Cylinder args={[0.35, 0.35, 0.1, 6]} position={[0, 0.05, 0]} castShadow>
         <meshStandardMaterial
           color="#aaccff"
@@ -556,7 +545,6 @@ const Probeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) =>
         />
       </Cylinder>
 
-      {/* Cuerpo cilíndrico */}
       <Cylinder args={[0.25, 0.25, 1.8, 32]} position={[0, 1.0, 0]} castShadow>
         <meshPhysicalMaterial
           transparent
@@ -568,7 +556,6 @@ const Probeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) =>
         />
       </Cylinder>
 
-      {/* Pico vertedor */}
       <Cone args={[0.15, 0.2, 32]} position={[0.35, 1.85, 0]} rotation={[0, 0, -Math.PI / 2]} castShadow>
         <meshPhysicalMaterial
           transparent
@@ -579,7 +566,6 @@ const Probeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) =>
         />
       </Cone>
 
-      {/* Marcas de graduación detalladas */}
       {Array.from({ length: 10 }).map((_, i) => {
         const y = 0.2 + (i * 0.18);
         return (
@@ -603,8 +589,7 @@ const Probeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) =>
         );
       })}
 
-      {/* Líquido */}
-      {contenido && contenido.nivel > 0 && (
+      {contenido && typeof contenido.nivel === 'number' && contenido.nivel > 0 && (
         <Cylinder 
           args={[0.24, 0.24, contenido.nivel * 1.7, 32]} 
           position={[0, (contenido.nivel * 1.7) / 2 + 0.15, 0]}
@@ -620,8 +605,7 @@ const Probeta: React.FC<{ contenido?: ContenidoUtensilio }> = ({ contenido }) =>
         </Cylinder>
       )}
 
-      {/* Menisco (superficie del líquido) */}
-      {contenido && contenido.nivel > 0 && (
+      {contenido && typeof contenido.nivel === 'number' && contenido.nivel > 0 && (
         <Sphere 
           args={[0.24, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} 
           position={[0, contenido.nivel * 1.7 + 0.15, 0]}

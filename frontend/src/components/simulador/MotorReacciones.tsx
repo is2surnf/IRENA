@@ -1,32 +1,25 @@
-// frontend/src/components/simulador/MotorReacciones.tsx
+// frontend/src/components/simulador/MotorReacciones.tsx - CORREGIDO
 import React, { useRef, useEffect, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { Text, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
-import type { Reaccion, Elemento, Utensilio } from '../../types/simulacion.types';
+import type { Reaccion } from '../../types/simulacion.types';
 
 interface MotorReaccionesProps {
   reaccion: Reaccion;
-  elementos: Elemento[];
-  utensilio: Utensilio;
   position: [number, number, number];
   onCompletada: () => void;
-  onError?: (mensaje: string) => void;
 }
 
 export const MotorReacciones: React.FC<MotorReaccionesProps> = ({
   reaccion,
-  elementos,
-  utensilio,
   position,
-  onCompletada,
-  onError
+  onCompletada
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const particlesRef = useRef<THREE.Points>(null);
   const [progreso, setProgreso] = useState(0);
   const [estado, setEstado] = useState<'iniciando' | 'procesando' | 'completando' | 'completado'>('iniciando');
-  const { scene } = useThree();
 
   const particulas = useRef<{
     posiciones: Float32Array;
@@ -103,7 +96,8 @@ export const MotorReacciones: React.FC<MotorReaccionesProps> = ({
     }
 
     if (particlesRef.current && particulas.current) {
-      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+      const geometry = particlesRef.current.geometry;
+      const positions = geometry.attributes.position.array as Float32Array;
       const count = positions.length / 3;
 
       for (let i = 0; i < count; i++) {
@@ -134,7 +128,7 @@ export const MotorReacciones: React.FC<MotorReaccionesProps> = ({
         }
       }
 
-      particlesRef.current.geometry.attributes.position.needsUpdate = true;
+      geometry.attributes.position.needsUpdate = true;
     }
   });
 
@@ -160,36 +154,41 @@ export const MotorReacciones: React.FC<MotorReaccionesProps> = ({
 
   return (
     <group ref={groupRef} position={position}>
-      <points ref={particlesRef}>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            count={particulas.current?.posiciones.length ? particulas.current.posiciones.length / 3 : 0}
-            array={particulas.current?.posiciones || new Float32Array()}
-            itemSize={3}
+      {particulas.current && (
+        <points ref={particlesRef}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[particulas.current.posiciones, 3]}
+              count={particulas.current.posiciones.length / 3}
+              array={particulas.current.posiciones}
+              itemSize={3}
+            />
+            <bufferAttribute
+              attach="attributes-color"
+              args={[particulas.current.colores, 3]}
+              count={particulas.current.colores.length / 3}
+              array={particulas.current.colores}
+              itemSize={3}
+            />
+            <bufferAttribute
+              attach="attributes-size"
+              args={[particulas.current.tamanos, 1]}
+              count={particulas.current.tamanos.length}
+              array={particulas.current.tamanos}
+              itemSize={1}
+            />
+          </bufferGeometry>
+          <pointsMaterial
+            size={0.1}
+            vertexColors
+            transparent
+            opacity={0.8}
+            sizeAttenuation
+            blending={THREE.AdditiveBlending}
           />
-          <bufferAttribute
-            attach="attributes-color"
-            count={particulas.current?.colores.length ? particulas.current.colores.length / 3 : 0}
-            array={particulas.current?.colores || new Float32Array()}
-            itemSize={3}
-          />
-          <bufferAttribute
-            attach="attributes-size"
-            count={particulas.current?.tamanos.length || 0}
-            array={particulas.current?.tamanos || new Float32Array()}
-            itemSize={1}
-          />
-        </bufferGeometry>
-        <pointsMaterial
-          size={0.1}
-          vertexColors
-          transparent
-          opacity={0.8}
-          sizeAttenuation
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
+        </points>
+      )}
 
       <Sphere args={[0.3, 16, 16]} position={[0, 1.5, 0]}>
         <meshBasicMaterial

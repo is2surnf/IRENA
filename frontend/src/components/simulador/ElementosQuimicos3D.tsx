@@ -1,5 +1,5 @@
 // frontend/src/components/simulador/ElementosQuimicos3D.tsx
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Box, Sphere, Text } from '@react-three/drei';
 import type { Elemento } from '../../types/simulacion.types';
@@ -12,12 +12,12 @@ interface ElementosQuimicos3DProps {
 }
 
 const COLORES_CATEGORIA: Record<string, string> = {
-  'Metales': '#FFD700',
+  Metales: '#FFD700',
   'No metales': '#4A90E2',
-  'Gases y Halogenos': '#9B59B6',
-  'Acidos': '#E74C3C',
-  'Bases': '#27AE60',
-  'Sales': '#ECF0F1',
+  'Gases y Halógenos': '#9B59B6',
+  Ácidos: '#E74C3C',
+  Bases: '#27AE60',
+  Sales: '#ECF0F1',
 };
 
 const ElementosQuimicos3D: React.FC<ElementosQuimicos3DProps> = ({
@@ -34,17 +34,21 @@ const ElementosQuimicos3D: React.FC<ElementosQuimicos3DProps> = ({
     }
   });
 
-  const getColor = () => {
-    return COLORES_CATEGORIA[elemento.categoria] || '#3498DB';
-  };
+  const getColor = () =>
+    COLORES_CATEGORIA[elemento.categoria || 'No metales'] || '#3498DB';
 
   const renderByState = () => {
-    switch (elemento.estado) {
-      case 'Solido':
+    const estado = elemento.estado?.toLowerCase() || 'solido';
+
+    switch (estado) {
+      case 'solido':
+      case 'sólido':
         return <ElementoSolido color={getColor()} />;
-      case 'Liquido':
+      case 'liquido':
+      case 'líquido':
         return <ElementoLiquido color={getColor()} />;
-      case 'Gas':
+      case 'gas':
+      case 'gaseoso':
         return <ElementoGaseoso color={getColor()} />;
       default:
         return <ElementoSolido color={getColor()} />;
@@ -73,7 +77,7 @@ const ElementosQuimicos3D: React.FC<ElementosQuimicos3DProps> = ({
         outlineWidth={0.02}
         outlineColor="#000000"
       >
-        {elemento.simbolo}
+        {elemento.simbolo || 'E'}
       </Text>
 
       {hover && (
@@ -91,23 +95,24 @@ const ElementosQuimicos3D: React.FC<ElementosQuimicos3DProps> = ({
   );
 };
 
+// ============ COMPONENTES INTERNOS ============
+
 const ElementoSolido: React.FC<{ color: string }> = ({ color }) => {
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  useEffect(() => {
+    return () => {
+      materialRef.current?.dispose?.();
+    };
+  }, []);
+
   return (
     <group>
       <Box args={[0.5, 0.5, 0.5]}>
-        <meshStandardMaterial
-          color={color}
-          roughness={0.7}
-          metalness={0.3}
-        />
+        <meshStandardMaterial ref={materialRef} color={color} roughness={0.7} metalness={0.3} />
       </Box>
       <Box args={[0.52, 0.52, 0.52]}>
-        <meshBasicMaterial
-          color={color}
-          transparent
-          opacity={0.2}
-          wireframe
-        />
+        <meshBasicMaterial color={color} transparent opacity={0.2} wireframe />
       </Box>
     </group>
   );
@@ -128,9 +133,11 @@ const ElementoLiquido: React.FC<{ color: string }> = ({ color }) => {
         <meshPhysicalMaterial
           color={color}
           transparent
-          opacity={0.8}
-          roughness={0.1}
-          transmission={0.5}
+          opacity={0.85}
+          roughness={0.2}
+          ior={1.3}
+          thickness={0.2}
+          reflectivity={0.2}
         />
       </Sphere>
       <Sphere args={[0.1, 16, 16]} position={[0, -0.5, 0]}>
@@ -141,8 +148,16 @@ const ElementoLiquido: React.FC<{ color: string }> = ({ color }) => {
 };
 
 const ElementoGaseoso: React.FC<{ color: string }> = ({ color }) => {
+  const gasGroup = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (gasGroup.current) {
+      gasGroup.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.2;
+    }
+  });
+
   return (
-    <group>
+    <group ref={gasGroup}>
       {Array.from({ length: 15 }).map((_, i) => {
         const angle = (i / 15) * Math.PI * 2;
         const radius = 0.3 + Math.random() * 0.2;
@@ -152,22 +167,13 @@ const ElementoGaseoso: React.FC<{ color: string }> = ({ color }) => {
 
         return (
           <Sphere key={i} args={[0.05, 8, 8]} position={[x, y, z]}>
-            <meshBasicMaterial
-              color={color}
-              transparent
-              opacity={0.6}
-            />
+            <meshBasicMaterial color={color} transparent opacity={0.6} />
           </Sphere>
         );
       })}
-      
+
       <Sphere args={[0.4, 16, 16]}>
-        <meshBasicMaterial
-          color={color}
-          transparent
-          opacity={0.1}
-          wireframe
-        />
+        <meshBasicMaterial color={color} transparent opacity={0.1} wireframe />
       </Sphere>
     </group>
   );

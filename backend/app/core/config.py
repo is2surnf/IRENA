@@ -1,4 +1,4 @@
-# app/core/config.py - VERSIÓN CORREGIDA
+# app/core/config.py 
 from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl, validator
 from typing import List, Union

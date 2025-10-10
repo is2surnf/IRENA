@@ -1,43 +1,31 @@
 -- 1. ELIMINAR TODOS LOS DATOS EXISTENTES
-TRUNCATE TABLE elemento;
+TRUNCATE TABLE elemento CASCADE;
+ALTER SEQUENCE elemento_id_elemento_seq RESTART WITH 1;
 
--- 2. INSERTAR SOLO DATOS ÚNICOS (26 registros)
-INSERT INTO elementos_quimicos 
-(id_elemento, nombre, simbolo, numero_atomico, masa_atomica, densidad, estado, descripcion, categoria, imagen_url)
+INSERT INTO elemento 
+(nombre, simbolo, numero_atomico, masa_atomica, densidad, estado, descripcion, categoria, imagen_url)
 VALUES
--- Elementos (47-60)
-(47, 'Hidrógeno', 'H', 1, 1.01, 0.09, 'Gas', 'Gas inflamable, base de reacciones de combustión', 'No metales', 'hidrogeno.png'),
-(48, 'Oxígeno', 'O', 8, 16.00, 1.43, 'Gas', 'Esencial para combustión y oxidación', 'No metales', 'oxigeno.png'),
-(49, 'Nitrógeno', 'N', 7, 14.01, 1.25, 'Gas', 'Gas inerte, útil para simulaciones atmosféricas', 'No metales', 'nitrogeno.png'),
-(50, 'Cloro', 'Cl', 17, 35.45, 3.21, 'Gas', 'No metal reactivo, base para sales como NaCl', 'Gases y Halógenos', 'cloro.png'),
-(51, 'Carbono', 'C', 6, 12.01, 2.27, 'Sólido', 'En forma de grafito o carbón, útil en combustión', 'No metales', 'carbono.png'),
-(52, 'Azufre', 'S', 16, 32.06, 2.07, 'Sólido', 'Sólido amarillento, reacciona con oxígeno y metales', 'No metales', 'azufre.png'),
-(53, 'Sodio', 'Na', 11, 22.99, 0.97, 'Sólido', 'Metal muy reactivo con agua, base para NaOH', 'Metales', 'sodio.png'),
-(54, 'Potasio', 'K', 19, 39.10, 0.86, 'Sólido', 'Aún más reactivo que el sodio', 'Metales', 'potasio.png'),
-(55, 'Magnesio', 'Mg', 12, 24.31, 1.74, 'Sólido', 'Arde con llama blanca, útil en demostraciones', 'Metales', 'magnesio.png'),
-(56, 'Calcio', 'Ca', 20, 40.08, 1.55, 'Sólido', 'Presente en cal, reacciona con agua', 'Metales', 'calcio.png'),
-(57, 'Hierro', 'Fe', 26, 55.85, 7.87, 'Sólido', 'Base de la corrosión y formación de óxidos', 'Metales', 'hierro.png'),
-(58, 'Cobre', 'Cu', 29, 63.55, 8.96, 'Sólido', 'Útil para reacciones de desplazamiento y electrólisis', 'Metales', 'cobre.png'),
-(59, 'Zinc', 'Zn', 30, 65.38, 7.13, 'Sólido', 'Reacciona con ácidos liberando hidrógeno', 'Metales', 'zinc.png'),
-(60, 'Aluminio', 'Al', 13, 26.98, 2.70, 'Sólido', 'Resistencia a corrosión, reacciones con ácidos', 'Metales', 'aluminio.png'),
 
--- Ácidos (61-64)
-(61, 'Ácido clorhídrico', 'HCl', NULL, 36.46, 1.49, 'Líquido', 'Ácido fuerte, reacciona con metales y bases', 'Ácidos', 'acido_clorhidrico.png'),
-(62, 'Ácido sulfúrico', 'H₂SO₄', NULL, 98.08, 1.84, 'Líquido', 'Ácido fuerte, base de muchas reacciones', 'Ácidos', 'acido_sulfurico.png'),
-(63, 'Ácido nítrico', 'HNO₃', NULL, 63.01, 1.51, 'Líquido', 'Oxidante fuerte, reacciona con metales', 'Ácidos', 'acido_nitrico.png'),
-(64, 'Ácido acético', 'CH₃COOH', NULL, 60.05, 1.05, 'Líquido', 'Ácido débil, presente en vinagre', 'Ácidos', 'acido_acetico.png'),
+('Hidrógeno', 'H', 1, 1.01, 0.09, 'Gas', 'Gas inflamable más ligero, combustible limpio. Esencial para síntesis de agua y amoníaco.', 'No metales', 'hidrogeno.png'),
+('Oxígeno', 'O', 8, 16.00, 1.43, 'Gas', 'Gas comburente esencial para combustión y respiración. Forma óxidos con la mayoría de elementos.', 'No metales', 'oxigeno.png'),
+('Nitrógeno', 'N', 7, 14.01, 1.25, 'Gas', 'Gas inerte que forma el 78% de la atmósfera. Base para fertilizantes y explosivos.', 'No metales', 'nitrogeno.png'),
+('Cloro', 'Cl', 17, 35.45, 3.21, 'Gas', 'Halógeno altamente reactivo, amarillo verdoso. Usado en desinfección y síntesis de sales.', 'Gases y Halógenos', 'cloro.png'),
 
--- Bases (65-67)
-(65, 'Hidróxido de sodio', 'NaOH', NULL, 40.00, 2.13, 'Sólido', 'Base fuerte, reacciona con ácidos', 'Bases', 'hidroxido_sodio.png'),
-(66, 'Hidróxido de potasio', 'KOH', NULL, 56.11, 2.04, 'Sólido', 'Base fuerte, similar a NaOH', 'Bases', 'hidroxido_potasio.png'),
-(67, 'Amoniaco', 'NH₃', NULL, 17.03, 0.73, 'Gas', 'Base débil, usado en limpieza y fertilizantes', 'Bases', 'amoniaco.png'),
 
--- Sales (68-72)
-(68, 'Cloruro de sodio', 'NaCl', NULL, 58.44, 2.17, 'Sólido', 'Sal común, soluble en agua', 'Sales', 'cloruro_sodio.png'),
-(69, 'Sulfato de cobre', 'CuSO₄', NULL, 159.61, 3.60, 'Sólido', 'Color azul, reacciones de hidratación', 'Sales', 'sulfato_cobre.png'),
-(70, 'Carbonato de calcio', 'CaCO₃', NULL, 100.09, 2.71, 'Sólido', 'Presente en piedra caliza y mármol', 'Sales', 'carbonato_calcio.png'),
-(71, 'Nitrato de potasio', 'KNO₃', NULL, 101.10, 2.11, 'Sólido', 'Usado en pólvora y fertilizantes', 'Sales', 'nitrato_potasio.png'),
-(72, 'Sulfato de sodio', 'Na₂SO₄', NULL, 142.04, 2.66, 'Sólido', 'Sal neutra, útil en simulaciones', 'Sales', 'sulfato_sodio.png');
+('Carbono', 'C', 6, 12.01, 2.27, 'Sólido', 'Base de química orgánica. Existe como grafito, diamante o carbón vegetal.', 'No metales', 'carbono.png'),
+('Azufre', 'S', 16, 32.06, 2.07, 'Sólido', 'Sólido amarillo que forma ácidos fuertes. Reacciona con metales formando sulfuros.', 'No metales', 'azufre.png'),
+('Sodio', 'Na', 11, 22.99, 0.97, 'Sólido', 'Metal plateado extremadamente reactivo con agua. Base de hidróxido de sodio (soda cáustica).', 'Metales', 'sodio.png'),
+('Potasio', 'K', 19, 39.10, 0.86, 'Sólido', 'Más reactivo que el sodio, arde con llama violeta. Usado en fertilizantes.', 'Metales', 'potasio.png'),
+
+
+('Magnesio', 'Mg', 12, 24.31, 1.74, 'Sólido', 'Metal ligero que arde con llama blanca brillante. Usado en fuegos artificiales.', 'Metales', 'magnesio.png'),
+('Calcio', 'Ca', 20, 40.08, 1.55, 'Sólido', 'Metal reactivo, componente de piedra caliza y huesos. Forma cal viva (CaO).', 'Metales', 'calcio.png'),
+
+
+('Hierro', 'Fe', 26, 55.85, 7.87, 'Sólido', 'Metal ferromagnético que se oxida fácilmente. Base de acero y hemoglobina.', 'Metales', 'hierro.png'),
+('Cobre', 'Cu', 29, 63.55, 8.96, 'Sólido', 'Metal rojizo excelente conductor. Forma compuestos azules y verdes característicos.', 'Metales', 'cobre.png'),
+('Zinc', 'Zn', 30, 65.38, 7.13, 'Sólido', 'Metal gris que reacciona con ácidos liberando hidrógeno. Usado en galvanizado.', 'Metales', 'zinc.png'),
+('Aluminio', 'Al', 13, 26.98, 2.70, 'Sólido', 'Metal ligero resistente a corrosión. Forma capa protectora de óxido (Al₂O₃).', 'Metales', 'aluminio.png');
 
 -- INSERT para tabla utensilio
 INSERT INTO utensilio 

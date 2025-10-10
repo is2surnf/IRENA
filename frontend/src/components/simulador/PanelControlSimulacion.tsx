@@ -1,8 +1,8 @@
-// frontend/src/components/simulador/PanelControlSimulacion.tsx
+// frontend/src/components/simulador/PanelControlSimulacion.tsx - DARK THEME
 import React, { useState, useMemo } from 'react';
 import { 
   Play, Atom, FlaskConical, Target, 
-  Plus, TestTube, Flame, Search, X, Info
+  Plus, TestTube, Flame, Search, X, Info, Sparkles, Star, Filter
 } from 'lucide-react';
 import type { Elemento, Utensilio } from '../../types/simulacion.types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,10 +32,8 @@ const PanelControlSimulacion: React.FC<PanelControlSimulacionProps> = ({
   const [activeTab, setActiveTab] = useState<Tab>('elementos');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('Todos');
+  const [showFilters, setShowFilters] = useState(false);
 
-  // ============================================
-  // FILTRADO INTELIGENTE
-  // ============================================
   const filteredElementos = useMemo(() => {
     return elementos.filter(elemento => {
       const matchSearch = elemento.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -51,42 +49,45 @@ const PanelControlSimulacion: React.FC<PanelControlSimulacionProps> = ({
     );
   }, [utensilios, searchTerm]);
 
-  // Categorías únicas de elementos
   const categorias = useMemo(() => {
     const cats = new Set(elementos.map(e => e.categoria));
     return ['Todos', ...Array.from(cats)];
   }, [elementos]);
 
   return (
-    <motion.aside 
-      className="w-96 bg-gradient-to-b from-gray-800/95 to-gray-900/95 backdrop-blur-xl border-r border-cyan-500/30 flex flex-col h-screen overflow-hidden shadow-2xl"
-      initial={{ x: -400, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
-    >
+    <div className="h-full flex flex-col bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-2xl">
       {/* ==================== HEADER ==================== */}
-      <div className="p-6 border-b border-cyan-500/30 bg-gradient-to-r from-cyan-900/40 to-purple-900/40">
+      <div className="p-5 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-900/20 via-purple-900/20 to-blue-900/20">
         <motion.h2 
-          className="text-2xl font-bold text-white mb-6 text-center pb-4 bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent"
+          className="text-2xl font-bold text-white mb-5 flex items-center"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
-          <Atom className="inline w-7 h-7 mr-2 text-cyan-400" />
-          Panel de Control
+          <div className="relative mr-3">
+            <div className="absolute inset-0 bg-cyan-500/30 blur-lg rounded-full" />
+            <Atom className="relative w-7 h-7 text-cyan-400 animate-spin-slow" />
+          </div>
+          <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Panel de Control
+          </span>
         </motion.h2>
 
-        {/* Botón Iniciar Simulación */}
+        {/* Botón Iniciar */}
         <motion.button
           onClick={onIniciarSimulacion}
           disabled={simulacionActiva}
-          className={`w-full mb-5 px-6 py-4 rounded-2xl flex items-center justify-center font-bold text-white transition-all duration-300 shadow-2xl relative overflow-hidden ${
+          className={`w-full mb-4 px-6 py-3 rounded-xl flex items-center justify-center font-bold text-white transition-all duration-300 shadow-lg relative overflow-hidden group ${
             simulacionActiva
               ? 'bg-gradient-to-r from-green-600 to-emerald-600 cursor-not-allowed'
               : 'bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:shadow-cyan-500/50'
           }`}
-          whileHover={simulacionActiva ? {} : { scale: 1.02, y: -2 }}
+          whileHover={simulacionActiva ? {} : { scale: 1.02 }}
           whileTap={simulacionActiva ? {} : { scale: 0.98 }}
         >
+          {!simulacionActiva && (
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          )}
+          
           {simulacionActiva && (
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -94,53 +95,67 @@ const PanelControlSimulacion: React.FC<PanelControlSimulacionProps> = ({
               transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
             />
           )}
-          <Play className={`w-6 h-6 mr-3 ${simulacionActiva ? 'animate-pulse' : ''}`} />
-          {simulacionActiva ? '✓ Simulación Activa' : '🚀 Iniciar Simulación'}
+          
+          <div className="relative z-10 flex items-center">
+            <Play className={`w-5 h-5 mr-2 ${simulacionActiva ? 'animate-pulse' : ''}`} />
+            {simulacionActiva ? (
+              <>
+                <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
+                Simulación Activa
+              </>
+            ) : (
+              '🚀 Iniciar Simulación'
+            )}
+          </div>
         </motion.button>
 
         {/* Barra de búsqueda */}
         <motion.div 
-          className="relative mb-5"
+          className="relative"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="🔍 Buscar elementos o utensilios..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-10 py-3 bg-gray-700/50 border border-cyan-500/30 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm transition-all"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-cyan-400 z-10" />
+            <input
+              type="text"
+              placeholder="🔬 Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-cyan-500/20 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-transparent backdrop-blur-sm transition-all"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors z-10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </motion.div>
+      </div>
 
-        {/* Navegación de tabs */}
+      {/* ==================== TABS ==================== */}
+      <div className="px-5 py-3 border-b border-cyan-500/20 bg-slate-900/50">
         <nav className="grid grid-cols-3 gap-2">
           <TabButton
-            icon={<Atom className="w-5 h-5" />}
+            icon={<Atom className="w-4 h-4" />}
             label="Elementos"
             active={activeTab === 'elementos'}
             onClick={() => setActiveTab('elementos')}
             count={elementos.length}
           />
           <TabButton
-            icon={<FlaskConical className="w-5 h-5" />}
+            icon={<FlaskConical className="w-4 h-4" />}
             label="Utensilios"
             active={activeTab === 'utensilios'}
             onClick={() => setActiveTab('utensilios')}
             count={utensilios.length}
           />
           <TabButton
-            icon={<Target className="w-5 h-5" />}
+            icon={<Target className="w-4 h-4" />}
             label="Selección"
             active={activeTab === 'seleccion'}
             onClick={() => setActiveTab('seleccion')}
@@ -149,8 +164,8 @@ const PanelControlSimulacion: React.FC<PanelControlSimulacionProps> = ({
         </nav>
       </div>
 
-      {/* ==================== CONTENIDO PRINCIPAL ==================== */}
-      <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-800/50 to-gray-900/50 custom-scrollbar">
+      {/* ==================== CONTENIDO ==================== */}
+      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
         <AnimatePresence mode="wait">
           {/* TAB ELEMENTOS */}
           {activeTab === 'elementos' && (
@@ -161,27 +176,46 @@ const PanelControlSimulacion: React.FC<PanelControlSimulacionProps> = ({
               exit={{ opacity: 0, x: 20 }}
               className="space-y-4"
             >
-              {/* Filtro por categoría */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {categorias.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategoriaFiltro(cat)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      categoriaFiltro === cat
-                        ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/50'
-                        : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+              {/* Filtros de categorías */}
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-cyan-400 flex items-center">
+                  <Atom className="w-4 h-4 mr-2 animate-pulse" />
+                  Elementos ({filteredElementos.length})
+                </h3>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="p-2 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg transition-all"
+                >
+                  <Filter className="w-4 h-4 text-cyan-400" />
+                </button>
               </div>
 
-              <h3 className="text-lg font-semibold text-cyan-400 mb-4 flex items-center">
-                <Atom className="w-5 h-5 mr-2" />
-                Elementos Químicos ({filteredElementos.length})
-              </h3>
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="flex flex-wrap gap-2 mb-4 overflow-hidden"
+                  >
+                    {categorias.map(cat => (
+                      <motion.button
+                        key={cat}
+                        onClick={() => setCategoriaFiltro(cat)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          categoriaFiltro === cat
+                            ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white border border-cyan-400'
+                            : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700'
+                        }`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {cat}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               
               <div className="grid grid-cols-2 gap-3">
                 {filteredElementos.map((elemento, index) => (
@@ -206,9 +240,9 @@ const PanelControlSimulacion: React.FC<PanelControlSimulacionProps> = ({
               exit={{ opacity: 0, x: 20 }}
               className="space-y-4"
             >
-              <h3 className="text-lg font-semibold text-purple-400 mb-4 flex items-center">
-                <FlaskConical className="w-5 h-5 mr-2" />
-                Utensilios de Laboratorio ({filteredUtensilios.length})
+              <h3 className="text-sm font-semibold text-purple-400 mb-4 flex items-center">
+                <FlaskConical className="w-4 h-4 mr-2 animate-pulse" />
+                Utensilios ({filteredUtensilios.length})
               </h3>
               
               <div className="grid grid-cols-2 gap-3">
@@ -235,75 +269,112 @@ const PanelControlSimulacion: React.FC<PanelControlSimulacionProps> = ({
             >
               {elementoSeleccionado ? (
                 <motion.div 
-                  className="bg-gradient-to-br from-cyan-900/40 to-purple-900/40 rounded-3xl p-8 border-2 border-cyan-500/40 shadow-2xl"
+                  className="bg-gradient-to-br from-slate-800/60 via-slate-900/60 to-black/60 rounded-2xl p-6 border border-cyan-500/30 shadow-2xl relative overflow-hidden backdrop-blur-sm"
                   initial={{ scale: 0.8, rotateY: -15 }}
                   animate={{ scale: 1, rotateY: 0 }}
                   transition={{ type: "spring", stiffness: 200 }}
                 >
-                  {/* Símbolo del elemento */}
-                  <motion.div 
-                    className="text-8xl font-bold mb-4 bg-gradient-to-br from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent"
-                    animate={{ 
-                      scale: [1, 1.05, 1],
-                      rotate: [0, 2, -2, 0]
-                    }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    {elementoSeleccionado.simbolo}
-                  </motion.div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-blue-500/5 animate-pulse" />
+                  
+                  <div className="relative z-10">
+                    <motion.div 
+                      className="text-8xl font-bold mb-4 relative"
+                      animate={{ 
+                        scale: [1, 1.05, 1],
+                        textShadow: [
+                          '0 0 20px rgba(6, 182, 212, 0.5)',
+                          '0 0 40px rgba(6, 182, 212, 0.8)',
+                          '0 0 20px rgba(6, 182, 212, 0.5)'
+                        ]
+                      }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <span className="bg-gradient-to-br from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+                        {elementoSeleccionado.simbolo}
+                      </span>
+                      
+                      <div className="absolute inset-0 blur-3xl opacity-50 bg-gradient-to-br from-cyan-500 to-purple-500" />
+                    </motion.div>
 
-                  {/* Nombre del elemento */}
-                  <div className="text-3xl font-bold text-white mb-2">
-                    {elementoSeleccionado.nombre}
-                  </div>
+                    <motion.div 
+                      className="text-2xl font-bold text-white mb-2"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {elementoSeleccionado.nombre}
+                    </motion.div>
 
-                  {/* Descripción */}
-                  <p className="text-sm text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
-                    {elementoSeleccionado.descripcion}
-                  </p>
+                    <motion.p 
+                      className="text-xs text-slate-300 mb-5 leading-relaxed"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      {elementoSeleccionado.descripcion}
+                    </motion.p>
 
-                  {/* Propiedades en grid */}
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-cyan-500/20 px-4 py-3 rounded-xl border border-cyan-400/30">
-                      <div className="text-xs text-cyan-300 mb-1">Estado</div>
-                      <div className="text-sm font-bold text-white">{elementoSeleccionado.estado}</div>
+                    <div className="grid grid-cols-2 gap-2 mb-5">
+                      <PropertyCard
+                        label="Estado"
+                        value={elementoSeleccionado.estado}
+                        color="from-cyan-500/10 to-blue-500/10"
+                        borderColor="border-cyan-400/20"
+                        delay={0.4}
+                      />
+                      <PropertyCard
+                        label="Categoría"
+                        value={elementoSeleccionado.categoria}
+                        color="from-purple-500/10 to-pink-500/10"
+                        borderColor="border-purple-400/20"
+                        delay={0.5}
+                      />
+                      {elementoSeleccionado.numero_atomico && (
+                        <PropertyCard
+                          label="N° Atómico"
+                          value={elementoSeleccionado.numero_atomico.toString()}
+                          color="from-blue-500/10 to-indigo-500/10"
+                          borderColor="border-blue-400/20"
+                          delay={0.6}
+                        />
+                      )}
+                      {elementoSeleccionado.masa_atomica && (
+                        <PropertyCard
+                          label="Masa Atómica"
+                          value={elementoSeleccionado.masa_atomica.toFixed(2)}
+                          color="from-green-500/10 to-emerald-500/10"
+                          borderColor="border-green-400/20"
+                          delay={0.7}
+                        />
+                      )}
                     </div>
-                    <div className="bg-purple-500/20 px-4 py-3 rounded-xl border border-purple-400/30">
-                      <div className="text-xs text-purple-300 mb-1">Categoría</div>
-                      <div className="text-sm font-bold text-white">{elementoSeleccionado.categoria}</div>
-                    </div>
-                    {elementoSeleccionado.numero_atomico && (
-                      <div className="bg-blue-500/20 px-4 py-3 rounded-xl border border-blue-400/30">
-                        <div className="text-xs text-blue-300 mb-1">Número Atómico</div>
-                        <div className="text-sm font-bold text-white">{elementoSeleccionado.numero_atomico}</div>
-                      </div>
-                    )}
-                    {elementoSeleccionado.masa_atomica && (
-                      <div className="bg-green-500/20 px-4 py-3 rounded-xl border border-green-400/30">
-                        <div className="text-xs text-green-300 mb-1">Masa Atómica</div>
-                        <div className="text-sm font-bold text-white">{elementoSeleccionado.masa_atomica.toFixed(2)}</div>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Indicación de uso */}
-                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mt-4">
-                    <Info className="w-5 h-5 text-yellow-400 mx-auto mb-2" />
-                    <p className="text-xs text-yellow-200">
-                      Haz clic en un utensilio en la escena 3D para agregar este elemento
-                    </p>
+                    <motion.div 
+                      className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 mt-4 relative overflow-hidden"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8 }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 to-orange-500/5 animate-pulse" />
+                      <div className="relative z-10">
+                        <Info className="w-4 h-4 text-yellow-400 mx-auto mb-2 animate-bounce" />
+                        <p className="text-xs text-yellow-200 font-medium">
+                          Haz clic en un utensilio en la escena 3D para agregar este elemento
+                        </p>
+                      </div>
+                    </motion.div>
                   </div>
                 </motion.div>
               ) : (
                 <motion.div 
-                  className="text-gray-400"
+                  className="text-slate-400"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <Target className="w-24 h-24 mx-auto mb-6 opacity-30" />
-                  <p className="text-xl font-semibold mb-2">Sin Selección</p>
-                  <p className="text-sm text-gray-500 max-w-xs mx-auto">
-                    Selecciona un elemento químico o utensilio para ver sus detalles aquí
+                  <Target className="w-20 h-20 mx-auto mb-5 opacity-30 animate-pulse" />
+                  <p className="text-lg font-semibold mb-2">Sin Selección</p>
+                  <p className="text-xs text-slate-500">
+                    Selecciona un elemento químico para ver sus detalles aquí
                   </p>
                 </motion.div>
               )}
@@ -312,14 +383,27 @@ const PanelControlSimulacion: React.FC<PanelControlSimulacionProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* ==================== FOOTER CON TIPS ==================== */}
-      <div className="p-4 border-t border-cyan-500/30 bg-gradient-to-r from-gray-900/90 to-gray-800/90">
-        <div className="flex items-center text-xs text-gray-400">
-          <Info className="w-4 h-4 mr-2 text-cyan-400" />
-          <span>Tip: Combina al menos 2 elementos para crear reacciones</span>
+      {/* ==================== FOOTER ==================== */}
+      <div className="p-4 border-t border-cyan-500/20 bg-slate-900/90">
+        <div className="flex items-center text-xs text-slate-400">
+          <Info className="w-3 h-3 mr-2 text-cyan-400 animate-pulse" />
+          <span className="text-slate-300">
+            <strong className="text-cyan-400">Tip:</strong> Combina 2+ elementos para reacciones
+          </span>
         </div>
       </div>
-    </motion.aside>
+
+      <style>{`
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+      `}</style>
+    </div>
   );
 };
 
@@ -336,25 +420,36 @@ const TabButton: React.FC<{
 }> = ({ icon, label, active, onClick, count, badge }) => (
   <motion.button
     onClick={onClick}
-    className={`flex flex-col items-center justify-center px-3 py-3 rounded-xl transition-all duration-300 relative ${
+    className={`relative flex flex-col items-center justify-center px-2 py-2.5 rounded-lg transition-all duration-300 overflow-hidden ${
       active
-        ? 'bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/50'
-        : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
+        ? 'bg-gradient-to-br from-cyan-600/80 to-blue-600/80 text-white shadow-lg border border-cyan-400/50'
+        : 'bg-slate-800/30 text-slate-300 hover:bg-slate-700/40 hover:text-white border border-slate-700/50'
     }`}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
   >
-    {icon}
-    <span className="text-xs font-semibold mt-1">{label}</span>
+    {active && (
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+        animate={{ x: [-100, 200] }}
+        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+      />
+    )}
+    
+    <div className="relative z-10">
+      {icon}
+      <span className="text-[10px] font-semibold mt-1 block">{label}</span>
+    </div>
+    
     {count !== undefined && (
-      <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] rounded-full ${
+      <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 text-[9px] rounded-full font-bold ${
         active ? 'bg-white text-cyan-600' : 'bg-cyan-500 text-white'
       }`}>
         {count}
       </span>
     )}
     {badge && (
-      <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse border-2 border-gray-800"></span>
+      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse border border-slate-800"></span>
     )}
   </motion.button>
 );
@@ -386,24 +481,23 @@ const ElementoCard: React.FC<{
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`w-full p-4 rounded-2xl border-2 transition-all duration-300 text-left backdrop-blur-sm relative overflow-hidden ${
+      className={`w-full p-3 rounded-xl border transition-all duration-300 text-left backdrop-blur-sm relative overflow-hidden group ${
         isSelected
-          ? 'bg-gradient-to-br shadow-2xl scale-105 z-10'
-          : 'bg-gray-700/30 border-gray-600 hover:scale-105'
+          ? 'shadow-xl scale-105 z-10'
+          : 'bg-slate-800/30 border-slate-700/50 hover:scale-105'
       }`}
       style={{
-        borderColor: isSelected ? colors.border : '#4B5563',
+        borderColor: isSelected ? colors.border : '#334155',
         background: isSelected 
-          ? `linear-gradient(135deg, ${colors.from} 0%, ${colors.to} 100%)`
+          ? `linear-gradient(135deg, ${colors.from}30 0%, ${colors.to}30 100%)`
           : undefined
       }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: index * 0.03 }}
       whileHover={{ y: -5 }}
       whileTap={{ scale: 0.95 }}
     >
-      {/* Efecto de brillo en hover */}
       {(isHovered || isSelected) && (
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
@@ -412,11 +506,11 @@ const ElementoCard: React.FC<{
         />
       )}
 
-      {/* Contenido */}
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <motion.span 
-            className="text-4xl font-bold"
+            className="text-3xl font-bold"
+            style={{ color: colors.from }}
             animate={isSelected ? { scale: [1, 1.1, 1] } : {}}
             transition={{ duration: 0.5 }}
           >
@@ -425,38 +519,38 @@ const ElementoCard: React.FC<{
           <motion.div
             animate={isHovered ? { rotate: 90 } : {}}
             transition={{ duration: 0.3 }}
+            className={`p-1.5 rounded-lg ${isSelected ? 'bg-white/20' : 'bg-slate-700/50'}`}
           >
-            <Plus className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-cyan-400'}`} />
+            <Plus className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-cyan-400'}`} />
           </motion.div>
         </div>
         
-        <div className={`text-sm font-bold mb-1 truncate ${isSelected ? 'text-white' : 'text-gray-200'}`}>
+        <div className={`text-xs font-bold mb-1 truncate ${isSelected ? 'text-white' : 'text-slate-200'}`}>
           {elemento.nombre}
         </div>
         
-        <div className="flex justify-between items-center text-xs">
-          <span className={`${isSelected ? 'text-white/90' : 'text-gray-400'}`}>
+        <div className="flex justify-between items-center text-[10px]">
+          <span className={`${isSelected ? 'text-white/90' : 'text-slate-400'}`}>
             {elemento.estado}
           </span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+          <span className={`px-2 py-0.5 rounded-full text-[9px] ${
             isSelected 
               ? 'bg-white/20 text-white' 
-              : 'bg-black/30 text-gray-300'
+              : 'bg-black/30 text-slate-300'
           }`}>
             {elemento.categoria}
           </span>
         </div>
       </div>
 
-      {/* Indicador de selección */}
       {isSelected && (
         <motion.div
-          className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center"
+          className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 500 }}
         >
-          <span className="text-xs">✓</span>
+          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
         </motion.div>
       )}
     </motion.button>
@@ -476,12 +570,12 @@ const UtensilioCard: React.FC<{
   const getIcono = () => {
     const nombre = utensilio.nombre.toLowerCase();
     if (nombre.includes('mechero') || nombre.includes('bunsen')) {
-      return <Flame className="w-12 h-12" />;
+      return <Flame className="w-10 h-10" />;
     }
     if (nombre.includes('tubo')) {
-      return <TestTube className="w-12 h-12" />;
+      return <TestTube className="w-10 h-10" />;
     }
-    return <FlaskConical className="w-12 h-12" />;
+    return <FlaskConical className="w-10 h-10" />;
   };
 
   return (
@@ -489,14 +583,13 @@ const UtensilioCard: React.FC<{
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="w-full p-4 bg-gradient-to-br from-gray-700/50 to-gray-800/50 hover:from-purple-700/50 hover:to-blue-700/50 rounded-2xl border-2 border-gray-600 hover:border-purple-400 transition-all duration-300 text-left group shadow-lg relative overflow-hidden"
+      className="w-full p-3 bg-gradient-to-br from-slate-800/40 to-slate-900/40 hover:from-purple-700/30 hover:to-blue-700/30 rounded-xl border border-slate-700/50 hover:border-purple-400/50 transition-all duration-300 text-left group shadow-lg relative overflow-hidden"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: index * 0.03 }}
       whileHover={{ scale: 1.05, y: -5 }}
       whileTap={{ scale: 0.95 }}
     >
-      {/* Efecto de brillo */}
       {isHovered && (
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
@@ -505,34 +598,32 @@ const UtensilioCard: React.FC<{
         />
       )}
 
-      {/* Contenido */}
       <div className="relative z-10">
         <motion.div 
-          className="flex items-center justify-center mb-3 text-purple-400 group-hover:text-white transition-colors"
+          className="flex items-center justify-center mb-2 text-purple-400 group-hover:text-white transition-colors"
           animate={isHovered ? { scale: 1.2, rotate: 360 } : {}}
           transition={{ duration: 0.6 }}
         >
           {getIcono()}
         </motion.div>
         
-        <div className="text-sm font-semibold text-white text-center line-clamp-2 group-hover:text-purple-100 transition-colors mb-2">
+        <div className="text-xs font-semibold text-white text-center line-clamp-2 group-hover:text-purple-100 transition-colors mb-2">
           {utensilio.nombre}
         </div>
         
         <motion.div
-          className="text-xs text-center text-gray-400 group-hover:text-white transition-colors flex items-center justify-center"
+          className="text-[10px] text-center text-slate-400 group-hover:text-white transition-colors flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
           <Plus className="w-3 h-3 mr-1" />
-          <span>Agregar a mesa</span>
+          <span>Agregar</span>
         </motion.div>
       </div>
 
-      {/* Indicador de capacidad */}
       {utensilio.capacidad && (
-        <div className="absolute top-2 right-2 bg-purple-500/20 px-2 py-1 rounded-full text-[10px] text-purple-300 border border-purple-500/30">
+        <div className="absolute top-1 right-1 bg-purple-500/20 px-2 py-0.5 rounded-full text-[9px] text-purple-300 border border-purple-500/30">
           {utensilio.capacidad}ml
         </div>
       )}
@@ -541,7 +632,32 @@ const UtensilioCard: React.FC<{
 };
 
 // ============================================
-// FUNCIÓN AUXILIAR: AJUSTAR COLOR
+// COMPONENTE: TARJETA DE PROPIEDAD
+// ============================================
+const PropertyCard: React.FC<{
+  label: string;
+  value: string;
+  color: string;
+  borderColor: string;
+  delay: number;
+}> = ({ label, value, color, borderColor, delay }) => (
+  <motion.div
+    className={`bg-gradient-to-br ${color} px-3 py-2 rounded-lg border ${borderColor} relative overflow-hidden`}
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay, type: "spring" }}
+    whileHover={{ scale: 1.05 }}
+  >
+    <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent" />
+    <div className="relative z-10">
+      <div className="text-[10px] text-slate-400 mb-0.5">{label}</div>
+      <div className="text-xs font-bold text-white">{value}</div>
+    </div>
+  </motion.div>
+);
+
+// ============================================
+// FUNCIÓN AUXILIAR
 // ============================================
 function adjustColor(color: string, amount: number): string {
   const num = parseInt(color.replace('#', ''), 16);

@@ -1,7 +1,7 @@
 // frontend/src/services/reacciones.service.ts
 import type { Reaccion, DetectarReaccionRequest, ReaccionDetectadaResponse } from '../types/simulacion.types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
 
 class ReaccionesService {
   private async fetchAPI(endpoint: string, options: RequestInit = {}) {
@@ -50,32 +50,26 @@ class ReaccionesService {
     }
   }
 
-  async saludReacciones(): Promise<{ status: string; reacciones_disponibles: number }> {
-    try {
-      return await this.fetchAPI('/simulacion/health/status');
-    } catch (error) {
-      console.warn('Error en health check de reacciones', error);
-      return {
-        status: 'healthy',
-        reacciones_disponibles: this.getReaccionesLocales().length
-      };
-    }
-  }
-
   private detectarReaccionLocal(request: DetectarReaccionRequest): ReaccionDetectadaResponse {
     const simbolos = request.elementos.sort();
     const reacciones = this.getReaccionesLocales();
     
-    const reaccion = reacciones.find(r => {
+    // Buscar reacción exacta
+    const reaccionExacta = reacciones.find(r => {
       const reactivosReaccion = [...r.reactivos].sort();
       return JSON.stringify(simbolos) === JSON.stringify(reactivosReaccion);
     });
 
+    if (reaccionExacta) {
+      return {
+        reaccion: reaccionExacta,
+        mensaje: `¡Reacción detectada: ${reaccionExacta.nombre}!`
+      };
+    }
+
     return {
-      reaccion: reaccion || null,
-      mensaje: reaccion 
-        ? `¡Reacción detectada: ${reaccion.nombre}!`
-        : 'No se detectó ninguna reacción con los elementos proporcionados'
+      reaccion: null,
+      mensaje: 'No se detectó ninguna reacción con los elementos proporcionados'
     };
   }
 

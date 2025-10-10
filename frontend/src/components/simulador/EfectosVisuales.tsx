@@ -1,7 +1,7 @@
 // frontend/src/components/simulador/EfectosVisuales.tsx
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sphere, Cone, Box } from '@react-three/drei';
+import { Sphere, Cone } from '@react-three/drei';
 import type { EfectosReaccion } from '../../types/simulacion.types';
 import * as THREE from 'three';
 
@@ -16,7 +16,7 @@ const EfectosVisuales: React.FC<EfectosVisualesProps> = ({
 }) => {
   return (
     <group position={position}>
-      {efectos.burbujeo && <BurbujasEfecto intensidad={efectos.temperatura / 100} />}
+      {efectos.burbujeo && <BurbujasEfecto intensidad={Math.max(0.01, efectos.temperatura / 100)} />}
       {efectos.humo && <HumoEfecto color={efectos.colorFinal} />}
       {efectos.llama && <LlamaEfecto intensidad={efectos.intensidadLuz || 0.8} colorLuz={efectos.colorLuz} />}
       {efectos.precipitado && <PrecipitadoEfecto color={efectos.colorFinal} />}
@@ -28,53 +28,51 @@ const EfectosVisuales: React.FC<EfectosVisualesProps> = ({
 // EFECTO DE BURBUJAS
 // ============================================
 const BurbujasEfecto: React.FC<{ intensidad: number }> = ({ intensidad }) => {
-  const particlesRef = useRef<THREE.Points>(null);
+  const particlesRef = useRef<THREE.Points | null>(null);
   
-  const { positions, velocities, sizes } = useMemo(() => {
-    const count = Math.floor(100 * (intensidad + 0.5));
+  const { positions, velocities, sizes, texture } = useMemo(() => {
+    const count = Math.max(10, Math.floor(100 * (intensidad + 0.5)));
     const positions = new Float32Array(count * 3);
     const velocities = new Float32Array(count);
     const sizes = new Float32Array(count);
     
     for (let i = 0; i < count; i++) {
-      // Posición inicial dentro del líquido
       positions[i * 3] = (Math.random() - 0.5) * 0.6;
       positions[i * 3 + 1] = Math.random() * 0.3;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 0.6;
       
-      // Velocidad de ascenso variable
       velocities[i] = 0.008 + Math.random() * 0.015 * intensidad;
-      
-      // Tamaño de burbuja
       sizes[i] = 0.02 + Math.random() * 0.05;
     }
     
-    return { positions, velocities, sizes };
+    const texture = createBubbleTexture();
+    
+    return { positions, velocities, sizes, texture };
   }, [intensidad]);
 
   useFrame(() => {
-    if (!particlesRef.current) return;
-    
-    const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-    const count = positions.length / 3;
+    const points = particlesRef.current;
+    if (!points) return;
+    const geom = points.geometry;
+    if (!geom || !geom.attributes || !geom.attributes.position) return;
+
+    const posAttr = geom.attributes.position;
+    const positionsArr = posAttr.array as Float32Array;
+    const count = positionsArr.length / 3;
     
     for (let i = 0; i < count; i++) {
-      // Ascenso de burbujas
-      positions[i * 3 + 1] += velocities[i];
+      positionsArr[i * 3 + 1] += velocities[i];
+      positionsArr[i * 3] += Math.sin(positionsArr[i * 3 + 1] * 10) * 0.002;
+      positionsArr[i * 3 + 2] += Math.cos(positionsArr[i * 3 + 1] * 10) * 0.002;
       
-      // Movimiento lateral sinusoidal (simula turbulencia)
-      positions[i * 3] += Math.sin(positions[i * 3 + 1] * 10) * 0.002;
-      positions[i * 3 + 2] += Math.cos(positions[i * 3 + 1] * 10) * 0.002;
-      
-      // Resetear cuando llega arriba
-      if (positions[i * 3 + 1] > 2.5) {
-        positions[i * 3 + 1] = 0;
-        positions[i * 3] = (Math.random() - 0.5) * 0.6;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 0.6;
+      if (positionsArr[i * 3 + 1] > 2.5) {
+        positionsArr[i * 3 + 1] = 0;
+        positionsArr[i * 3] = (Math.random() - 0.5) * 0.6;
+        positionsArr[i * 3 + 2] = (Math.random() - 0.5) * 0.6;
       }
     }
     
-    particlesRef.current.geometry.attributes.position.needsUpdate = true;
+    posAttr.needsUpdate = true;
   });
 
   return (
@@ -82,12 +80,14 @@ const BurbujasEfecto: React.FC<{ intensidad: number }> = ({ intensidad }) => {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
+          args={[positions, 3]}
           count={positions.length / 3}
           array={positions}
           itemSize={3}
         />
         <bufferAttribute
           attach="attributes-size"
+          args={[sizes, 1]}
           count={sizes.length}
           array={sizes}
           itemSize={1}
@@ -101,7 +101,7 @@ const BurbujasEfecto: React.FC<{ intensidad: number }> = ({ intensidad }) => {
         sizeAttenuation
         blending={THREE.AdditiveBlending}
         depthWrite={false}
-        map={createBubbleTexture()}
+        map={texture}
       />
     </points>
   );
@@ -111,17 +111,15 @@ const BurbujasEfecto: React.FC<{ intensidad: number }> = ({ intensidad }) => {
 // EFECTO DE HUMO
 // ============================================
 const HumoEfecto: React.FC<{ color: string }> = ({ color }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const cloudsRef = useRef<Array<THREE.Mesh>>([]);
+  const groupRef = useRef<THREE.Group | null>(null);
+  const cloudsRef = useRef<Array<THREE.Mesh | null>>([]);
 
   useFrame((state) => {
     if (!groupRef.current) return;
     
-    // Movimiento ascendente general
     groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.3 + 1.2;
     groupRef.current.rotation.y += 0.005;
     
-    // Animación individual de nubes
     cloudsRef.current.forEach((cloud, i) => {
       if (cloud) {
         cloud.rotation.y += 0.01 * (i % 2 === 0 ? 1 : -1);
@@ -132,7 +130,7 @@ const HumoEfecto: React.FC<{ color: string }> = ({ color }) => {
     });
   });
 
-  const smokeColor = new THREE.Color(color).lerp(new THREE.Color('#888888'), 0.5);
+  const smokeColor = useMemo(() => new THREE.Color(color).lerp(new THREE.Color('#888888'), 0.5), [color]);
 
   return (
     <group ref={groupRef}>
@@ -145,7 +143,7 @@ const HumoEfecto: React.FC<{ color: string }> = ({ color }) => {
           <Sphere
             key={i}
             ref={(el) => {
-              if (el) cloudsRef.current[i] = el as THREE.Mesh;
+              cloudsRef.current[i] = el as any || null;
             }}
             args={[radius, 16, 16]}
             position={[
@@ -166,7 +164,6 @@ const HumoEfecto: React.FC<{ color: string }> = ({ color }) => {
         );
       })}
       
-      {/* Luz ambiente del humo */}
       <pointLight
         position={[0, 0.5, 0]}
         intensity={0.2}
@@ -184,35 +181,26 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
   intensidad, 
   colorLuz = '#FF6600' 
 }) => {
-  const flameRef = useRef<THREE.Group>(null);
-  const innerFlameRef = useRef<THREE.Mesh>(null);
-  const sparklesRef = useRef<THREE.Points>(null);
+  const flameRef = useRef<THREE.Group | null>(null);
+  const innerFlameRef = useRef<THREE.Mesh | null>(null);
+  const sparklesRef = useRef<THREE.Points | null>(null);
 
   const { sparks } = useMemo(() => {
     const count = 30;
     const positions = new Float32Array(count * 3);
-    const velocities = new Float32Array(count * 3);
     
     for (let i = 0; i < count; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 0.3;
       positions[i * 3 + 1] = Math.random() * 0.5;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
-      
-      velocities[i * 3] = (Math.random() - 0.5) * 0.02;
-      velocities[i * 3 + 1] = 0.02 + Math.random() * 0.03;
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
     }
     
-    return { 
-      sparks: positions,
-      sparkVelocities: velocities
-    };
+    return { sparks: positions };
   }, []);
 
   useFrame((state) => {
     if (!flameRef.current) return;
     
-    // Oscilación de la llama
     const scale = 1 + Math.sin(state.clock.elapsedTime * 12) * 0.15 * intensidad;
     const wobble = Math.sin(state.clock.elapsedTime * 8) * 0.08;
     
@@ -220,15 +208,15 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
     flameRef.current.position.x = wobble;
     flameRef.current.rotation.z = wobble * 0.5;
     
-    // Llama interior más intensa
     if (innerFlameRef.current) {
       const innerScale = 1 + Math.sin(state.clock.elapsedTime * 15) * 0.2;
       innerFlameRef.current.scale.set(1, innerScale, 1);
     }
     
-    // Animación de chispas
     if (sparklesRef.current) {
-      const positions = sparklesRef.current.geometry.attributes.position.array as Float32Array;
+      const geom = sparklesRef.current.geometry;
+      if (!geom || !geom.attributes || !geom.attributes.position) return;
+      const positions = geom.attributes.position.array as Float32Array;
       
       for (let i = 0; i < positions.length / 3; i++) {
         positions[i * 3 + 1] += 0.03;
@@ -241,14 +229,13 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
         }
       }
       
-      sparklesRef.current.geometry.attributes.position.needsUpdate = true;
+      (geom.attributes.position as any).needsUpdate = true;
     }
   });
 
   return (
     <group>
       <group ref={flameRef}>
-        {/* Llama exterior (naranja/roja) */}
         <Cone args={[0.25 * intensidad, 0.9 * intensidad, 16]} position={[0, 0.45, 0]}>
           <meshBasicMaterial
             color={colorLuz}
@@ -259,7 +246,6 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
           />
         </Cone>
         
-        {/* Llama intermedia (amarilla) */}
         <Cone args={[0.18 * intensidad, 0.7 * intensidad, 16]} position={[0, 0.35, 0]}>
           <meshBasicMaterial
             color="#FFAA00"
@@ -270,7 +256,6 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
           />
         </Cone>
         
-        {/* Llama interior (azul/blanca) */}
         <Cone 
           ref={innerFlameRef}
           args={[0.12 * intensidad, 0.5 * intensidad, 16]} 
@@ -285,22 +270,19 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
           />
         </Cone>
 
-        {/* Núcleo brillante */}
         <Sphere args={[0.08 * intensidad, 16, 16]} position={[0, 0.15, 0]}>
           <meshBasicMaterial
             color="#FFFFFF"
-            emissive="#FFFFFF"
-            emissiveIntensity={2}
             toneMapped={false}
           />
         </Sphere>
       </group>
 
-      {/* Chispas volando */}
       <points ref={sparklesRef}>
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
+            args={[sparks, 3]}
             count={sparks.length / 3}
             array={sparks}
             itemSize={3}
@@ -316,7 +298,6 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
         />
       </points>
 
-      {/* Sistema de luces de la llama */}
       <pointLight
         position={[0, 0.5, 0]}
         color={colorLuz}
@@ -333,11 +314,8 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
         distance={2.5}
       />
       
-      {/* Luz ambiental cálida */}
       <hemisphereLight
-        skyColor="#FFAA00"
-        groundColor="#FF6600"
-        intensity={0.5 * intensidad}
+        args={['#FFAA00', '#FF6600', 0.5 * intensidad]}
         position={[0, 1, 0]}
       />
     </group>
@@ -348,8 +326,8 @@ const LlamaEfecto: React.FC<{ intensidad: number; colorLuz?: string }> = ({
 // EFECTO DE PRECIPITADO
 // ============================================
 const PrecipitadoEfecto: React.FC<{ color: string }> = ({ color }) => {
-  const particlesRef = useRef<THREE.Points>(null);
-  const pilesRef = useRef<Array<THREE.Mesh>>([]);
+  const particlesRef = useRef<THREE.Points | null>(null);
+  const pilesRef = useRef<Array<THREE.Mesh | null>>([]);
   
   const particles = useMemo(() => {
     const count = 60;
@@ -368,42 +346,44 @@ const PrecipitadoEfecto: React.FC<{ color: string }> = ({ color }) => {
     return { positions, velocities, sizes };
   }, []);
 
+  const texture = useMemo(() => createPrecipitateTexture(), []);
+
   useFrame(() => {
-    if (!particlesRef.current) return;
+    const points = particlesRef.current;
+    if (!points) return;
+    const geom = points.geometry;
+    if (!geom || !geom.attributes || !geom.attributes.position) return;
+    const posAttr = geom.attributes.position;
+    const positionsArr = posAttr.array as Float32Array;
     
-    const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-    
-    for (let i = 0; i < positions.length / 3; i++) {
-      // Caída con gravedad
-      positions[i * 3 + 1] -= particles.velocities[i];
+    for (let i = 0; i < positionsArr.length / 3; i++) {
+      positionsArr[i * 3 + 1] -= particles.velocities[i];
+      positionsArr[i * 3] += Math.sin(positionsArr[i * 3 + 1] * 5) * 0.001;
       
-      // Movimiento lateral leve
-      positions[i * 3] += Math.sin(positions[i * 3 + 1] * 5) * 0.001;
-      
-      // Resetear cuando llega al fondo
-      if (positions[i * 3 + 1] < 0.1) {
-        positions[i * 3 + 1] = 2;
-        positions[i * 3] = (Math.random() - 0.5) * 0.7;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 0.7;
+      if (positionsArr[i * 3 + 1] < 0.1) {
+        positionsArr[i * 3 + 1] = 2;
+        positionsArr[i * 3] = (Math.random() - 0.5) * 0.7;
+        positionsArr[i * 3 + 2] = (Math.random() - 0.5) * 0.7;
       }
     }
     
-    particlesRef.current.geometry.attributes.position.needsUpdate = true;
+    posAttr.needsUpdate = true;
   });
 
   return (
     <group>
-      {/* Partículas cayendo */}
       <points ref={particlesRef}>
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
+            args={[particles.positions, 3]}
             count={particles.positions.length / 3}
             array={particles.positions}
             itemSize={3}
           />
           <bufferAttribute
             attach="attributes-size"
+            args={[particles.sizes, 1]}
             count={particles.sizes.length}
             array={particles.sizes}
             itemSize={1}
@@ -415,16 +395,15 @@ const PrecipitadoEfecto: React.FC<{ color: string }> = ({ color }) => {
           transparent
           opacity={0.9}
           sizeAttenuation
-          map={createPrecipitateTexture()}
+          map={texture}
         />
       </points>
 
-      {/* Acumulación en el fondo */}
       {Array.from({ length: 15 }).map((_, i) => (
         <Sphere
           key={i}
           ref={(el) => {
-            if (el) pilesRef.current[i] = el as THREE.Mesh;
+            pilesRef.current[i] = el as any || null;
           }}
           args={[0.05 + Math.random() * 0.03, 8, 8]}
           position={[
@@ -462,6 +441,7 @@ function createBubbleTexture(): THREE.Texture {
   ctx.fillRect(0, 0, 64, 64);
   
   const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
   return texture;
 }
 
@@ -471,12 +451,14 @@ function createPrecipitateTexture(): THREE.Texture {
   canvas.height = 32;
   const ctx = canvas.getContext('2d')!;
   
+  ctx.clearRect(0, 0, 32, 32);
   ctx.fillStyle = 'white';
   ctx.beginPath();
   ctx.arc(16, 16, 12, 0, Math.PI * 2);
   ctx.fill();
   
   const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
   return texture;
 }
 

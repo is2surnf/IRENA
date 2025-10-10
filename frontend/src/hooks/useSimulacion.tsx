@@ -1,512 +1,541 @@
-// frontend/src/hooks/useSimulacion.ts - VERSIÓN CORREGIDA Y MEJORADA
-import { useState, useCallback, useEffect, useRef } from 'react';
+// frontend/src/hooks/useSimulacion.ts 
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import type { 
-  ObjetoSimulacion, 
   EstadoSimulacion, 
-  Reaccion, 
-  Elemento,
-  Utensilio,
+  ObjetoSimulacion, 
+  Utensilio, 
+  Elemento, 
+  Reaccion,
   EfectosReaccion,
-  UseSimulacionReturn
+  ContenidoUtensilio,
+  ReaccionDetectadaResponse
 } from '../types/simulacion.types';
-import { useReacciones } from './useReacciones';
+import { reaccionesService } from '../services/reacciones.service';
+// CORRECCIÓN 3: Importar THREE para que calcularColorMezcla funcione
+import * as THREE from 'three'; 
 
-// ============================================
-// GENERADOR DE ID ÚNICO
-// ============================================
-const generarId = (): string => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const initialState: EstadoSimulacion = {
+  activa: false,
+  objetosEnMesa: [],
+  temperatura: 25,
+  pH: 7.0,
+  tiempo: 0,
+  resultados: [],
+  historialReacciones: [],
+  advertencias: []
+};
 
-// ============================================
-// REACCIONES PREDEFINIDAS (Base de datos local mejorada)
-// ============================================
-const REACCIONES_DB: Reaccion[] = [
-  {
-    id: 1,
-    nombre: 'Síntesis de Agua',
-    descripcion: 'Reacción de hidrógeno con oxígeno para formar agua',
-    reactivos: ['H', 'O'],
-    productos: ['H₂O'],
-    formula: '2H₂ + O₂ → 2H₂O',
-    tipo: 'síntesis',
-    peligrosidad: 'alta',
-    efectos: {
-      colorFinal: '#4A90E2',
-      temperatura: 100,
-      burbujeo: true,
-      humo: true,
-      precipitado: false,
-      llama: true,
-      mensaje: '¡Agua formada! Reacción muy exotérmica con liberación de energía',
-      intensidadLuz: 0.8,
-      colorLuz: '#FFA500',
-      duracion: 5
-    }
-  },
-  {
-    id: 2,
-    nombre: 'Neutralización Ácido-Base',
-    descripcion: 'HCl reacciona con NaOH formando sal y agua',
-    reactivos: ['HCl', 'NaOH'],
-    productos: ['NaCl', 'H₂O'],
-    formula: 'HCl + NaOH → NaCl + H₂O',
-    tipo: 'doble_sustitución',
-    peligrosidad: 'media',
-    efectos: {
-      colorFinal: '#ECF0F1',
-      temperatura: 35,
-      burbujeo: false,
-      humo: false,
-      precipitado: false,
-      llama: false,
-      mensaje: 'Sal común formada - pH neutro alcanzado',
-      intensidadLuz: 0.3,
-      colorLuz: '#FFFFFF',
-      duracion: 5
-    }
-  },
-  {
-    id: 3,
-    nombre: 'Oxidación del Magnesio',
-    descripcion: 'Magnesio arde en presencia de oxígeno',
-    reactivos: ['Mg', 'O'],
-    productos: ['MgO'],
-    formula: '2Mg + O₂ → 2MgO',
-    tipo: 'combustión',
-    peligrosidad: 'alta',
-    efectos: {
-      colorFinal: '#FFFFFF',
-      temperatura: 650,
-      burbujeo: false,
-      humo: true,
-      precipitado: true,
-      llama: true,
-      mensaje: '¡Llama brillante! Óxido de magnesio formado',
-      intensidadLuz: 1.0,
-      colorLuz: '#FFFFFF',
-      duracion: 5
-    }
-  },
-  {
-    id: 4,
-    nombre: 'Descomposición del Peróxido',
-    descripcion: 'Peróxido de hidrógeno se descompone',
-    reactivos: ['H₂O₂'],
-    productos: ['H₂O', 'O₂'],
-    formula: '2H₂O₂ → 2H₂O + O₂',
-    tipo: 'descomposición',
-    peligrosidad: 'baja',
-    efectos: {
-      colorFinal: '#FFFFFF',
-      temperatura: 25,
-      burbujeo: true,
-      humo: false,
-      precipitado: false,
-      llama: false,
-      mensaje: 'Oxígeno liberado - Efervescencia visible',
-      intensidadLuz: 0.2,
-      colorLuz: '#FFFFFF',
-      duracion: 5
-    }
-  },
-  {
-    id: 5,
-    nombre: 'Formación de Cloruro de Sodio',
-    descripcion: 'Sodio reacciona violentamente con cloro',
-    reactivos: ['Na', 'Cl'],
-    productos: ['NaCl'],
-    formula: '2Na + Cl₂ → 2NaCl',
-    tipo: 'síntesis',
-    peligrosidad: 'alta',
-    efectos: {
-      colorFinal: '#FFFFFF',
-      temperatura: 45,
-      burbujeo: false,
-      humo: true,
-      precipitado: true,
-      llama: true,
-      mensaje: 'Sal de mesa formada - Reacción violenta',
-      intensidadLuz: 0.7,
-      colorLuz: '#FFFF00',
-      duracion: 5
-    }
-  },
-  {
-    id: 6,
-    nombre: 'Reacción de Bicarbonato con Vinagre',
-    descripcion: 'Efervescencia al mezclar bicarbonato y ácido acético',
-    reactivos: ['NaHCO₃', 'CH₃COOH'],
-    productos: ['CO₂', 'H₂O', 'NaCH₃COO'],
-    formula: 'NaHCO₃ + CH₃COOH → CO₂ + H₂O + NaCH₃COO',
-    tipo: 'doble_sustitución',
-    peligrosidad: 'baja',
-    efectos: {
-      colorFinal: '#F0E68C',
-      temperatura: 22,
-      burbujeo: true,
-      humo: false,
-      precipitado: false,
-      llama: false,
-      mensaje: 'Efervescencia intensa - Liberación de CO₂',
-      intensidadLuz: 0.1,
-      colorLuz: '#FFFFFF',
-      duracion: 5
-    }
-  }
-];
-
-// ============================================
-// HOOK PRINCIPAL MEJORADO
-// ============================================
-export const useSimulacion = (): UseSimulacionReturn => {
-  const [estado, setEstado] = useState<EstadoSimulacion>({
-    activa: false,
-    objetosEnMesa: [],
-    temperatura: 25,
-    pH: 7.0,
-    tiempo: 0,
-    resultados: [],
-    reaccionActual: undefined,
-    historialReacciones: [],
-    advertencias: []
-  });
-
+export const useSimulacion = () => {
+  const [estado, setEstado] = useState<EstadoSimulacion>(initialState);
   const [efectosActivos, setEfectosActivos] = useState<EfectosReaccion | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const { detectarReaccion: detectarReaccionHook } = useReacciones();
+  const [reaccionEnProgreso, setReaccionEnProgreso] = useState<string | null>(null);
+  // CORRECCIÓN 1: Cambiar NodeJS.Timeout a number para entorno de navegador
+  const tiempoRef = useRef<number | null>(null);
 
   // ============================================
-  // CONTADOR DE TIEMPO MEJORADO
+  // GESTIÓN DE ESTADO MEJORADA
   // ============================================
-  useEffect(() => {
-    if (!estado.activa) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      return;
-    }
 
-    timerRef.current = setInterval(() => {
-      setEstado(prev => ({
-        ...prev,
-        tiempo: prev.tiempo + 1
-      }));
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [estado.activa]);
-
-  // ============================================
-  // AGREGAR UTENSILIO A LA MESA (MEJORADO)
-  // ============================================
-  const agregarUtensilio = useCallback((
-    utensilio: Utensilio, 
-    position?: [number, number, number]
-  ): string => {
-    const posicionFinal = position || [
-      (Math.random() - 0.5) * 6,
-      0.1,
-      (Math.random() - 0.5) * 3
-    ];
-
+  const agregarUtensilio = useCallback((utensilio: Utensilio, position: [number, number, number] = [0, 0.1, 0]): string => {
     const nuevoObjeto: ObjetoSimulacion = {
-      id: generarId(),
+      id: uuidv4(),
       tipo: 'utensilio',
       data: utensilio,
-      position: posicionFinal,
+      position,
       rotation: [0, 0, 0],
-      scale: [1, 1, 1],
       contenido: {
         elementos: [],
         nivel: 0,
         color: '#FFFFFF',
         temperatura: 25,
         estado: 'reposo'
-      },
-      bloqueado: false,
-      visible: true
+      }
     };
 
     setEstado(prev => ({
       ...prev,
-      objetosEnMesa: [...prev.objetosEnMesa, nuevoObjeto]
+      objetosEnMesa: [...prev.objetosEnMesa, nuevoObjeto],
+      advertencias: [...(prev.advertencias || []), `✅ ${utensilio.nombre} agregado a la mesa`]
     }));
 
     return nuevoObjeto.id;
   }, []);
 
-  // ============================================
-  // AGREGAR ELEMENTO A UTENSILIO (MEJORADO)
-  // ============================================
-  const agregarElementoAUtensilio = useCallback((
-    utensilioId: string,
-    elemento: Elemento
-  ): void => {
+  const agregarElementoAUtensilio = useCallback((utensilioId: string, elemento: Elemento) => {
     setEstado(prev => {
-      const objetosActualizados = prev.objetosEnMesa.map(obj => {
-        if (obj.id === utensilioId && obj.contenido) {
-          const elementosActuales = obj.contenido.elementos;
+      const utensilio = prev.objetosEnMesa.find(obj => obj.id === utensilioId && obj.tipo === 'utensilio');
+      
+      if (!utensilio || !utensilio.contenido) {
+        console.warn('Utensilio no encontrado o sin contenido');
+        return prev;
+      }
+
+      const nuevosObjetos = prev.objetosEnMesa.map(objeto => {
+        if (objeto.id === utensilioId && objeto.tipo === 'utensilio' && objeto.contenido) {
+          const elementosExistentes = objeto.contenido.elementos;
           
-          // Evitar duplicados del mismo elemento
-          const yaExiste = elementosActuales.some(e => e.simbolo === elemento.simbolo);
-          if (yaExiste) {
-            console.warn(`El elemento ${elemento.simbolo} ya está en el utensilio`);
-            return obj;
+          // Verificar si el elemento ya existe
+          const elementoExistente = elementosExistentes.find(e => e.id === elemento.id);
+          if (elementoExistente) {
+            return objeto; // No agregar duplicados
           }
 
-          const nuevosElementos = [...elementosActuales, elemento];
-          const nuevoNivel = Math.min(obj.contenido.nivel + 0.15, 1.0);
-          
-          // Determinar color según categoría del último elemento agregado
-          let nuevoColor = '#4A90E2';
-          switch (elemento.categoria) {
-            case 'Ácidos':
-              nuevoColor = '#E74C3C';
-              break;
-            case 'Bases':
-              nuevoColor = '#27AE60';
-              break;
-            case 'Metales':
-              nuevoColor = '#FFD700';
-              break;
-            case 'Sales':
-              nuevoColor = '#ECF0F1';
-              break;
-            case 'Gases y Halógenos':
-              nuevoColor = '#9B59B6';
-              break;
-            default:
-              nuevoColor = '#4A90E2';
-          }
+          const nuevoContenido: ContenidoUtensilio = {
+            ...objeto.contenido,
+            elementos: [...elementosExistentes, elemento],
+            nivel: Math.min(1, objeto.contenido.nivel + 0.25),
+            color: calcularColorMezcla([...elementosExistentes, elemento]),
+            temperatura: objeto.contenido.temperatura + (elemento.categoria === 'Ácidos' ? 5 : 0),
+            estado: elementosExistentes.length > 0 ? 'mezclando' : 'reposo'
+          };
           
           return {
-            ...obj,
-            contenido: {
-              ...obj.contenido,
-              elementos: nuevosElementos,
-              nivel: nuevoNivel,
-              color: nuevoColor,
-              estado: 'mezclando' as const
-            }
+            ...objeto,
+            contenido: nuevoContenido
           };
         }
-        return obj;
+        return objeto;
       });
 
+      const mensaje = `➕ ${elemento.nombre} (${elemento.simbolo}) agregado al utensilio`;
+      
       return {
         ...prev,
-        objetosEnMesa: objetosActualizados
+        objetosEnMesa: nuevosObjetos,
+        resultados: [...prev.resultados, mensaje],
+        advertencias: [...(prev.advertencias || []), mensaje]
       };
     });
   }, []);
 
   // ============================================
-  // DETECTAR REACCIÓN QUÍMICA (MEJORADO)
+  // DETECCIÓN DE REACCIONES MEJORADA
   // ============================================
-  const detectarReaccion = useCallback((utensilioId: string): Reaccion | null => {
+
+  const detectarReaccion = useCallback(async (utensilioId: string): Promise<Reaccion | null> => {
     const utensilio = estado.objetosEnMesa.find(obj => obj.id === utensilioId);
     
-    if (!utensilio || !utensilio.contenido || utensilio.contenido.elementos.length < 1) {
-      console.warn('No hay suficientes elementos para detectar reacción');
+    if (!utensilio || !utensilio.contenido || utensilio.contenido.elementos.length < 2) {
+      console.log('No hay suficientes elementos para detectar reacción');
       return null;
     }
 
-    const simbolos = utensilio.contenido.elementos
-      .map(e => e.simbolo)
-      .sort();
+    // Verificar si ya hay una reacción en progreso
+    if (reaccionEnProgreso === utensilioId) {
+      console.log('Reacción ya en progreso para este utensilio');
+      return null;
+    }
 
-    // Buscar reacción que coincida
-    const reaccion = REACCIONES_DB.find(r => {
-      const reactivosReaccion = [...r.reactivos].sort();
+    const simbolosElementos = utensilio.contenido.elementos.map(e => e.simbolo || '');
+    
+    try {
+      console.log('🔬 Detectando reacción para elementos:', simbolosElementos);
       
-      // Verificar si todos los reactivos están presentes
-      return reactivosReaccion.every(reactivo => 
-        simbolos.includes(reactivo)
-      ) && simbolos.length === reactivosReaccion.length;
-    });
+      const response: ReaccionDetectadaResponse = await reaccionesService.detectarReaccion({
+        utensilio_id: utensilioId,
+        elementos: simbolosElementos.filter(s => s)
+      });
 
-    if (reaccion) {
-      console.log('✅ Reacción detectada:', reaccion.nombre);
-      return reaccion;
-    }
+      if (response.reaccion) {
+        console.log('🎉 Reacción detectada:', response.reaccion.nombre);
+        
+        setReaccionEnProgreso(utensilioId);
+        setEstado(prev => ({
+          ...prev,
+          // CORRECCIÓN 2: Usar ! para asegurar el tipo, resolviendo Error 2345
+          reaccionActual: response.reaccion!,
+          // CORRECCIÓN 2: Usar ! para asegurar el tipo, resolviendo Error 18047
+          resultados: [...prev.resultados, `⚡ Reacción iniciada: ${response.reaccion!.nombre}`], 
+          // CORRECCIÓN 2: Usar ! para asegurar el tipo, resolviendo Error 18047
+          advertencias: [...(prev.advertencias || []), `🔥 ${response.reaccion!.nombre} detectada!`] 
+        }));
+        
+        // Activar efectos visuales
+        setEfectosActivos(response.reaccion.efectos);
+        
+        // Actualizar estado del utensilio
+        setEstado(prev => ({
+          ...prev,
+          objetosEnMesa: prev.objetosEnMesa.map(obj => 
+            obj.id === utensilioId && obj.tipo === 'utensilio' && obj.contenido
+              ? {
+                  ...obj,
+                  contenido: {
+                    ...obj.contenido,
+                    estado: 'reaccionando',
+                    temperatura: response.reaccion!.efectos.temperatura,
+                    color: response.reaccion!.efectos.colorFinal
+                  }
+                }
+              : obj
+          )
+        }));
 
-    console.log('❌ No se detectó reacción con elementos:', simbolos);
-    return null;
-  }, [estado.objetosEnMesa]);
-
-  // ============================================
-  // INICIAR REACCIÓN (CON BOTÓN) - MEJORADO
-  // ============================================
-  const iniciarReaccion = useCallback(async (utensilioId: string): Promise<void> => {
-    let reaccion = detectarReaccion(utensilioId);
-    
-    // Si no se encuentra localmente, intentar con el hook
-    if (!reaccion) {
-      const utensilio = estado.objetosEnMesa.find(obj => obj.id === utensilioId);
-      if (utensilio && utensilio.contenido) {
-        reaccion = await detectarReaccionHook(utensilio.contenido.elementos);
+        // Programar finalización de la reacción
+        const duracion = (response.reaccion.efectos.duracion || 8) * 1000;
+        
+        setTimeout(() => {
+          console.log('✅ Reacción completada');
+          setReaccionEnProgreso(null);
+          setEfectosActivos(null);
+          
+          setEstado(prev => ({
+            ...prev,
+            reaccionActual: undefined,
+            // CORRECCIÓN 2: Usar ! para asegurar el tipo en el closure (Error 18047)
+            historialReacciones: [...(prev.historialReacciones || []), response.reaccion!], 
+            objetosEnMesa: prev.objetosEnMesa.map(obj => 
+              obj.id === utensilioId && obj.tipo === 'utensilio' && obj.contenido
+                ? {
+                    ...obj,
+                    contenido: {
+                      ...obj.contenido,
+                      estado: 'completado',
+                      temperatura: 25
+                    }
+                  }
+                : obj
+            ),
+            // CORRECCIÓN 2: Usar ! para asegurar el tipo en el closure (Error 18047)
+            advertencias: [...(prev.advertencias || []), `✅ ${response.reaccion!.nombre} completada`] 
+          }));
+        }, duracion);
+        
+        return response.reaccion;
+      } else {
+        console.log('❌ No se detectó reacción para:', simbolosElementos);
+        setEstado(prev => ({
+          ...prev,
+          advertencias: [...(prev.advertencias || []), `❌ No se detectó reacción para la combinación`]
+        }));
+        return null;
       }
-    }
-    
-    if (!reaccion) {
+    } catch (error) {
+      console.error('🚨 Error detectando reacción:', error);
+      
+      // Fallback a detección local
+      const reaccionLocal = detectarReaccionLocal(utensilio.contenido.elementos);
+      if (reaccionLocal) {
+        console.log('🔄 Usando reacción local de fallback:', reaccionLocal.nombre);
+        return reaccionLocal;
+      }
+      
       setEstado(prev => ({
         ...prev,
-        advertencias: [...(prev.advertencias || []), 'No se detectó ninguna reacción química válida']
+        advertencias: [...(prev.advertencias || []), `⚠️ Error de conexión. Reintentando...`]
       }));
+      
+      return null;
+    }
+  }, [estado.objetosEnMesa, reaccionEnProgreso]);
+
+  // ============================================
+  // DETECCIÓN LOCAL DE REACCIONES (FALLBACK)
+  // ============================================
+
+  const detectarReaccionLocal = useCallback((elementos: Elemento[]): Reaccion | null => {
+    const simbolos = elementos.map(e => e.simbolo).sort();
+    const reaccionesLocales = obtenerReaccionesLocales();
+
+    // Buscar reacción exacta
+    for (const reaccion of reaccionesLocales) {
+      const reactivosReaccion = [...reaccion.reactivos].sort();
+      
+      if (JSON.stringify(simbolos) === JSON.stringify(reactivosReaccion)) {
+        return reaccion;
+      }
+    }
+
+    // Buscar reacción parcial (al menos 2 elementos coinciden)
+    for (const reaccion of reaccionesLocales) {
+      const reactivosReaccion = [...reaccion.reactivos];
+      const elementosCoincidentes = simbolos.filter(s => reactivosReaccion.includes(s));
+      
+      if (elementosCoincidentes.length >= 2) {
+        console.log('🔍 Reacción parcial detectada:', reaccion.nombre);
+        return {
+          ...reaccion,
+          nombre: `${reaccion.nombre} (Parcial)`,
+          efectos: {
+            ...reaccion.efectos,
+            intensidadLuz: reaccion.efectos.intensidadLuz ? reaccion.efectos.intensidadLuz * 0.7 : 0.5
+          }
+        };
+      }
+    }
+
+    return null;
+  }, []);
+
+  // ============================================
+  // GESTIÓN DE SIMULACIÓN MEJORADA
+  // ============================================
+
+  const iniciarReaccion = useCallback(async (utensilioId: string) => {
+    if (reaccionEnProgreso) {
+      console.log('⏳ Ya hay una reacción en progreso');
       return;
     }
 
-    // Activar efectos visuales inmediatamente
-    setEfectosActivos(reaccion.efectos);
+    console.log('🚀 Iniciando reacción manual para utensilio:', utensilioId);
+    const reaccion = await detectarReaccion(utensilioId);
     
-    // Actualizar estado de simulación
-    setEstado(prev => ({
-      ...prev,
-      reaccionActual: reaccion,
-      temperatura: reaccion.efectos.temperatura,
-      pH: calcularPH(reaccion.reactivos),
-      historialReacciones: [...(prev.historialReacciones || []), reaccion],
-      resultados: [...prev.resultados, `${reaccion.nombre}: ${reaccion.efectos.mensaje}`],
-      objetosEnMesa: prev.objetosEnMesa.map(obj => {
-        if (obj.id === utensilioId && obj.contenido) {
-          return {
-            ...obj,
-            contenido: {
-              ...obj.contenido,
-              color: reaccion!.efectos.colorFinal,
-              temperatura: reaccion!.efectos.temperatura,
-              estado: 'reaccionando' as const
-            }
-          };
-        }
-        return obj;
-      })
-    }));
-
-    // Desactivar efectos después de la duración especificada
-    const duracion = reaccion.efectos.duracion || 5;
-    setTimeout(() => {
-      setEfectosActivos(null);
+    if (reaccion) {
       setEstado(prev => ({
         ...prev,
-        reaccionActual: undefined,
-        objetosEnMesa: prev.objetosEnMesa.map(obj => {
-          if (obj.id === utensilioId && obj.contenido) {
-            return {
-              ...obj,
-              contenido: {
-                ...obj.contenido,
-                estado: 'completado' as const
-              }
-            };
-          }
-          return obj;
-        })
+        // CORRECCIÓN 2: Usar ! para asegurar el tipo (Error 18047)
+        resultados: [...prev.resultados, `🎯 Reacción manual iniciada: ${reaccion!.nombre}`],
+        advertencias: [...(prev.advertencias || []), `⚡ Reacción manual activada!`]
       }));
-    }, duracion * 1000);
+    }
+  }, [detectarReaccion, reaccionEnProgreso]);
 
-  }, [detectarReaccion, detectarReaccionHook, estado.objetosEnMesa]);
+  const iniciarSimulacion = useCallback(() => {
+    if (estado.activa) {
+      console.log('⏸️ La simulación ya está activa');
+      return;
+    }
 
-  // ============================================
-  // FUNCIÓN AUXILIAR: CALCULAR PH (MEJORADA)
-  // ============================================
-  const calcularPH = (reactivos: string[]): number => {
-    // Lógica mejorada para cálculo de pH
-    if (reactivos.includes('HCl') || reactivos.includes('H₂SO₄') || reactivos.includes('HNO₃')) {
-      return 2.0; // Ácido fuerte
-    }
-    if (reactivos.includes('CH₃COOH')) {
-      return 4.5; // Ácido débil
-    }
-    if (reactivos.includes('NaOH') || reactivos.includes('KOH')) {
-      return 12.0; // Base fuerte
-    }
-    if (reactivos.includes('NH₃')) {
-      return 9.5; // Base débil
-    }
-    if (reactivos.includes('NaCl') || reactivos.includes('KNO₃')) {
-      return 7.0; // Sal neutra
-    }
-    return 7.0; // Neutro por defecto
-  };
-
-  // ============================================
-  // MOVER OBJETO EN LA MESA
-  // ============================================
-  const moverObjeto = useCallback((id: string, newPosition: [number, number, number]): void => {
+    console.log('🔬 Iniciando simulación de laboratorio');
     setEstado(prev => ({
       ...prev,
-      objetosEnMesa: prev.objetosEnMesa.map(obj => 
+      activa: true,
+      tiempo: 0,
+      resultados: [...prev.resultados, '🔬 Simulación de laboratorio iniciada'],
+      advertencias: [...(prev.advertencias || []), '🎯 Modo experimental activado']
+    }));
+
+    // Sistema de tiempo mejorado
+    if (tiempoRef.current) {
+      clearInterval(tiempoRef.current);
+    }
+
+    tiempoRef.current = setInterval(() => {
+      setEstado(prev => ({
+        ...prev,
+        tiempo: prev.tiempo + 1,
+        temperatura: prev.temperatura + (Math.random() - 0.5) * 0.1, // Fluctuación natural
+        pH: Math.max(0, Math.min(14, prev.pH + (Math.random() - 0.5) * 0.05)) // Fluctuación controlada
+      }));
+    }, 1000);
+  }, [estado.activa]);
+
+  const detenerSimulacion = useCallback(() => {
+    console.log('⏹️ Deteniendo simulación');
+    
+    if (tiempoRef.current) {
+      clearInterval(tiempoRef.current);
+      tiempoRef.current = null;
+    }
+
+    setEstado(prev => ({
+      ...prev,
+      activa: false,
+      resultados: [...prev.resultados, '⏹️ Simulación detenida'],
+      advertencias: [...(prev.advertencias || []), '💤 Modo experimental pausado']
+    }));
+  }, []);
+
+  const limpiarMesa = useCallback(() => {
+    console.log('🧹 Limpiando mesa de laboratorio');
+    
+    if (tiempoRef.current) {
+      clearInterval(tiempoRef.current);
+      tiempoRef.current = null;
+    }
+
+    setEstado(initialState);
+    setEfectosActivos(null);
+    setReaccionEnProgreso(null);
+  }, []);
+
+  // ============================================
+  // MANIPULACIÓN DE OBJETOS MEJORADA
+  // ============================================
+
+  const moverObjeto = useCallback((id: string, newPosition: [number, number, number]) => {
+    setEstado(prev => ({
+      ...prev,
+      objetosEnMesa: prev.objetosEnMesa.map(obj =>
         obj.id === id ? { ...obj, position: newPosition } : obj
       )
     }));
   }, []);
 
-  // ============================================
-  // INICIAR/DETENER SIMULACIÓN
-  // ============================================
-  const iniciarSimulacion = useCallback((): void => {
-    setEstado(prev => ({ 
-      ...prev, 
-      activa: true, 
-      tiempo: 0,
-      advertencias: []
-    }));
-  }, []);
-
-  const detenerSimulacion = useCallback((): void => {
-    setEstado(prev => ({ ...prev, activa: false }));
-  }, []);
-
-  // ============================================
-  // LIMPIAR MESA (MEJORADO)
-  // ============================================
-  const limpiarMesa = useCallback((): void => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
+  const eliminarObjeto = useCallback((id: string) => {
+    const objeto = estado.objetosEnMesa.find(obj => obj.id === id);
     
-    setEstado({
-      activa: false,
-      objetosEnMesa: [],
-      temperatura: 25,
-      pH: 7.0,
-      tiempo: 0,
-      resultados: [],
-      reaccionActual: undefined,
-      historialReacciones: [],
-      advertencias: []
-    });
-    
-    setEfectosActivos(null);
-  }, []);
-
-  // ============================================
-  // ELIMINAR OBJETO ESPECÍFICO
-  // ============================================
-  const eliminarObjeto = useCallback((id: string): void => {
     setEstado(prev => ({
       ...prev,
-      objetosEnMesa: prev.objetosEnMesa.filter(obj => obj.id !== id)
+      objetosEnMesa: prev.objetosEnMesa.filter(obj => obj.id !== id),
+      advertencias: [
+        ...(prev.advertencias || []), 
+        `🗑️ ${objeto?.tipo === 'utensilio' ? (objeto.data as Utensilio).nombre : 'Elemento'} removido`
+      ]
     }));
+  }, [estado.objetosEnMesa]);
+
+  const reiniciarExperimento = useCallback(() => {
+    console.log('🔄 Reiniciando experimento');
+    
+    setEstado(prev => ({
+      ...initialState,
+      historialReacciones: prev.historialReacciones // Mantener historial
+    }));
+    
+    setEfectosActivos(null);
+    setReaccionEnProgreso(null);
   }, []);
 
+  // ============================================
+  // EFECTOS DE LIMPIEZA
+  // ============================================
+
+  useEffect(() => {
+    return () => {
+      if (tiempoRef.current) {
+        clearInterval(tiempoRef.current);
+      }
+    };
+  }, []);
+
+  // ============================================
+  // FUNCIONES AUXILIARES
+  // ============================================
+
+  function calcularColorMezcla(elementos: Elemento[]): string {
+    if (elementos.length === 0) return '#FFFFFF';
+    
+    const coloresCategoria = {
+      'Metales': '#FFD700',
+      'No metales': '#4A90E2',
+      'Gases y Halógenos': '#9B59B6',
+      'Ácidos': '#E74C3C',
+      'Bases': '#27AE60',
+      'Sales': '#ECF0F1'
+    };
+
+    const colores = elementos.map(e => coloresCategoria[e.categoria] || '#4A90E2');
+    
+    // Mezcla simple de colores
+    if (colores.length === 1) return colores[0];
+    
+    // Para múltiples elementos, crear un gradiente
+    const colorBase = colores[0];
+    const variacion = elementos.length * 40;
+    
+    const color = new THREE.Color(colorBase);
+    const hsl = { h: 0, s: 0, l: 0 };
+    color.getHSL(hsl);
+    
+    hsl.h = (hsl.h + (variacion / 360)) % 1;
+    hsl.s = Math.min(1, hsl.s * 1.2);
+    
+    color.setHSL(hsl.h, hsl.s, hsl.l);
+    return `#${color.getHexString()}`;
+  }
+
+  function obtenerReaccionesLocales(): Reaccion[] {
+    return [
+      {
+        id: 1,
+        nombre: 'Síntesis de Agua',
+        descripcion: 'Reacción de hidrógeno con oxígeno para formar agua - Reacción altamente exotérmica',
+        reactivos: ['H', 'O'],
+        productos: ['H₂O'],
+        formula: '2H₂ + O₂ → 2H₂O',
+        tipo: 'síntesis',
+        peligrosidad: 'alta',
+        efectos: {
+          colorFinal: '#4A90E2',
+          temperatura: 150,
+          burbujeo: true,
+          humo: true,
+          precipitado: false,
+          llama: true,
+          mensaje: '¡Agua sintetizada! Reacción muy exotérmica',
+          intensidadLuz: 1.0,
+          colorLuz: '#FF5500',
+          duracion: 8
+        }
+      },
+      {
+        id: 2,
+        nombre: 'Neutralización Ácido-Base',
+        descripcion: 'Ácido clorhídrico reacciona con hidróxido de sodio formando sal común y agua',
+        reactivos: ['HCl', 'NaOH'],
+        productos: ['NaCl', 'H₂O'],
+        formula: 'HCl + NaOH → NaCl + H₂O',
+        tipo: 'doble_sustitución',
+        peligrosidad: 'media',
+        efectos: {
+          colorFinal: '#ECF0F1',
+          temperatura: 45,
+          burbujeo: true,
+          humo: false,
+          precipitado: false,
+          llama: false,
+          mensaje: 'Sal común formada - Neutralización completa',
+          intensidadLuz: 0.4,
+          colorLuz: '#FFFFFF',
+          duracion: 6
+        }
+      },
+      {
+        id: 3,
+        nombre: 'Combustión de Metano',
+        descripcion: 'El metano reacciona con oxígeno produciendo dióxido de carbono y agua',
+        reactivos: ['CH₄', 'O'],
+        productos: ['CO₂', 'H₂O'],
+        formula: 'CH₄ + 2O₂ → CO₂ + 2H₂O',
+        tipo: 'combustión',
+        peligrosidad: 'alta',
+        efectos: {
+          colorFinal: '#1a1a1a',
+          temperatura: 200,
+          burbujeo: false,
+          humo: true,
+          precipitado: false,
+          llama: true,
+          mensaje: '¡Combustión! Liberación de energía térmica',
+          intensidadLuz: 1.2,
+          colorLuz: '#FF3300',
+          duracion: 10
+        }
+      }
+    ];
+  }
+
+  // ============================================
+  // RETORNO DEL HOOK MEJORADO
+  // ============================================
+
   return {
+    // Estado principal
     estado,
     efectosActivos,
+    reaccionEnProgreso,
+    
+    // Gestión de objetos
     agregarUtensilio,
     agregarElementoAUtensilio,
+    moverObjeto,
+    eliminarObjeto,
+    
+    // Gestión de reacciones
     detectarReaccion,
     iniciarReaccion,
+    
+    // Control de simulación
     iniciarSimulacion,
     detenerSimulacion,
     limpiarMesa,
-    moverObjeto,
-    eliminarObjeto,
-    reaccionesDisponibles: REACCIONES_DB
+    reiniciarExperimento,
+    
+    // Utilidades
+    tieneElementos: estado.objetosEnMesa.length > 0,
+    tieneReacciones: (estado.historialReacciones?.length || 0) > 0,
+    estaActiva: estado.activa
   };
 };

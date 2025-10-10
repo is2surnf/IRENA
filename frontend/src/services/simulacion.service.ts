@@ -1,4 +1,4 @@
-// frontend/src/services/simulacion.service.ts - CORREGIDO
+// frontend/src/services/simulacion.service.ts
 import type { Elemento, Utensilio, Reaccion, DetectarReaccionRequest, ReaccionDetectadaResponse } from '../types/simulacion.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
@@ -34,9 +34,10 @@ class SimulacionService {
 
   async obtenerElementos(): Promise<Elemento[]> {
     try {
-      // Usar el servicio de elementos existente
+      // ✅ CORREGIDO: Importar desde elementos.service (no elementosService)
       const { getElementos } = await import('./elementos.service');
-      return await getElementos();
+      const elementos = await getElementos();
+      return elementos.map(this.adaptarElemento);
     } catch (error) {
       console.warn('Error fetching elementos, usando datos mock', error);
       return this.getElementosMock();
@@ -45,8 +46,10 @@ class SimulacionService {
 
   async obtenerElementoPorId(id: number): Promise<Elemento> {
     try {
+      // ✅ CORREGIDO: Importar desde elementos.service
       const { getElemento } = await import('./elementos.service');
-      return await getElemento(id);
+      const elemento = await getElemento(id);
+      return this.adaptarElemento(elemento);
     } catch (error) {
       console.warn('Error obteniendo elemento, usando mock', error);
       const elementos = this.getElementosMock();
@@ -58,8 +61,10 @@ class SimulacionService {
 
   async buscarElementos(query: string): Promise<Elemento[]> {
     try {
+      // ✅ CORREGIDO: Importar desde elementos.service
       const { searchElementos } = await import('./elementos.service');
-      return await searchElementos(query);
+      const elementos = await searchElementos(query);
+      return elementos.map(this.adaptarElemento);
     } catch (error) {
       console.warn('Error buscando elementos, usando búsqueda local', error);
       const elementos = this.getElementosMock();
@@ -72,8 +77,10 @@ class SimulacionService {
 
   async obtenerElementosPorCategoria(categoria: string): Promise<Elemento[]> {
     try {
+      // ✅ CORREGIDO: Importar desde elementos.service
       const { getElementsByCategoria } = await import('./elementos.service');
-      return await getElementsByCategoria(categoria);
+      const elementos = await getElementsByCategoria(categoria);
+      return elementos.map(this.adaptarElemento);
     } catch (error) {
       console.warn('Error obteniendo elementos por categoría, usando filtro local', error);
       const elementos = this.getElementosMock();
@@ -87,9 +94,9 @@ class SimulacionService {
 
   async obtenerUtensilios(): Promise<Utensilio[]> {
     try {
-      // Usar el servicio de utensilios existente
       const { getUtensilios } = await import('./utensiliosService');
-      return await getUtensilios();
+      const utensilios = await getUtensilios();
+      return utensilios.map(this.adaptarUtensilio);
     } catch (error) {
       console.warn('Error fetching utensilios, usando datos mock', error);
       return this.getUtensiliosMock();
@@ -99,7 +106,8 @@ class SimulacionService {
   async obtenerUtensilioPorId(id: number): Promise<Utensilio> {
     try {
       const { getUtensilio } = await import('./utensiliosService');
-      return await getUtensilio(id);
+      const utensilio = await getUtensilio(id);
+      return this.adaptarUtensilio(utensilio);
     } catch (error) {
       console.warn('Error obteniendo utensilio, usando mock', error);
       const utensilios = this.getUtensiliosMock();
@@ -112,7 +120,8 @@ class SimulacionService {
   async buscarUtensilios(query: string): Promise<Utensilio[]> {
     try {
       const { searchUtensilios } = await import('./utensiliosService');
-      return await searchUtensilios(query);
+      const utensilios = await searchUtensilios(query);
+      return utensilios.map(this.adaptarUtensilio);
     } catch (error) {
       console.warn('Error buscando utensilios, usando búsqueda local', error);
       const utensilios = this.getUtensiliosMock();
@@ -126,7 +135,8 @@ class SimulacionService {
   async obtenerUtensiliosPorTipo(tipo: string): Promise<Utensilio[]> {
     try {
       const { getUtensiliosByTipo } = await import('./utensiliosService');
-      return await getUtensiliosByTipo(tipo);
+      const utensilios = await getUtensiliosByTipo(tipo);
+      return utensilios.map(this.adaptarUtensilio);
     } catch (error) {
       console.warn('Error obteniendo utensilios por tipo, usando filtro local', error);
       const utensilios = this.getUtensiliosMock();
@@ -157,6 +167,49 @@ class SimulacionService {
       console.warn('Error fetching reacciones, usando datos mock', error);
       return this.getReaccionesMock();
     }
+  }
+
+  // ============================================
+  // ADAPTADORES DE TIPOS
+  // ============================================
+
+  private adaptarElemento(elemento: any): Elemento {
+    return {
+      id: elemento.id,
+      nombre: elemento.nombre,
+      // ✅ CORREGIDO: Garantizar que simbolo sea string (no opcional)
+      simbolo: elemento.simbolo || elemento.nombre.substring(0, 2).toUpperCase(),
+      numero_atomico: elemento.numero_atomico,
+      masa_atomica: elemento.masa_atomica,
+      densidad: elemento.densidad,
+      estado: (elemento.estado as 'Sólido' | 'Líquido' | 'Gas') || 'Sólido',
+      descripcion: elemento.descripcion,
+      categoria: (elemento.categoria as 'Metales' | 'No metales' | 'Gases y Halógenos' | 'Ácidos' | 'Bases' | 'Sales') || 'No metales',
+      imagen_url: elemento.imagen_url
+    };
+  }
+
+  private adaptarUtensilio(utensilio: any): Utensilio {
+    // ✅ CORREGIDO: Mapear tipo string a tipo literal
+    let tipoNormalizado: 'Vidriería y plásticos' | 'Equipos básicos' | 'Otros materiales' = 'Vidriería y plásticos';
+    
+    if (utensilio.tipo) {
+      const tipoLower = utensilio.tipo.toLowerCase();
+      if (tipoLower.includes('equipo') || tipoLower.includes('básico')) {
+        tipoNormalizado = 'Equipos básicos';
+      } else if (tipoLower.includes('otro') || tipoLower.includes('material')) {
+        tipoNormalizado = 'Otros materiales';
+      }
+    }
+
+    return {
+      id: utensilio.id,
+      nombre: utensilio.nombre,
+      descripcion: utensilio.descripcion,
+      capacidad: utensilio.capacidad,
+      tipo: tipoNormalizado,
+      imagen_url: utensilio.imagen_url
+    };
   }
 
   // ============================================
@@ -330,7 +383,6 @@ class SimulacionService {
 
   async healthCheck(): Promise<{ status: string; servicios: string[] }> {
     try {
-      // Verificar servicios individuales
       const servicios: string[] = [];
       
       try {

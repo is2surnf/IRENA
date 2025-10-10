@@ -1,6 +1,6 @@
 // frontend/src/hooks/useDragDrop3D.ts
-import { useRef, useState, useCallback } from 'react';
-import { useThree, useFrame } from '@react-three/fiber';
+import { useRef, useState, useCallback, useEffect } from 'react';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { ObjetoSimulacion } from '../types/simulacion.types';
 
@@ -15,7 +15,7 @@ interface UseDragDrop3DReturn {
 export const useDragDrop3D = (
   onObjectMove: (id: string, position: [number, number, number]) => void
 ): UseDragDrop3DReturn => {
-  const { camera, gl, raycaster, mouse } = useThree();
+  const { camera, gl, raycaster } = useThree();
   const [isDragging, setIsDragging] = useState(false);
   const [draggedObject, setDraggedObject] = useState<ObjetoSimulacion | null>(null);
   const dragPlane = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
@@ -44,8 +44,6 @@ export const useDragDrop3D = (
 
     e.stopPropagation();
 
-    const deltaX = e.clientX - previousMouse.current.x;
-    const deltaY = e.clientY - previousMouse.current.y;
     previousMouse.current.set(e.clientX, e.clientY);
 
     raycaster.setFromCamera(
@@ -70,30 +68,16 @@ export const useDragDrop3D = (
     }
   }, [isDragging, draggedObject, camera, raycaster, onObjectMove]);
 
-  useFrame(() => {
-    if (isDragging && draggedObject) {
-      const currentPos = new THREE.Vector3(...draggedObject.position);
-      if (currentPos.y < 0.15) {
-        const elevatedPos: [number, number, number] = [
-          currentPos.x,
-          0.15,
-          currentPos.z
-        ];
-        onObjectMove(draggedObject.id, elevatedPos);
-      }
-    }
-  });
-
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' && isDragging) {
       handlePointerUp();
     }
   }, [isDragging, handlePointerUp]);
 
-  useState(() => {
+  useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  });
+  }, [handleKeyDown]);
 
   return {
     isDragging,
@@ -105,7 +89,6 @@ export const useDragDrop3D = (
 };
 
 export const useDragDropObject3D = (
-  objeto: ObjetoSimulacion,
   onMove: (position: [number, number, number]) => void
 ) => {
   const [isDragging, setIsDragging] = useState(false);
